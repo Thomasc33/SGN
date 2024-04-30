@@ -4,7 +4,7 @@ import argparse
 import time
 import shutil
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = '1'
+# os.environ["CUDA_VISIBLE_DEVICES"] = '1'
 import os.path as osp
 import csv
 import numpy as np
@@ -36,12 +36,13 @@ parser.set_defaults(
     print_freq = 20,
     train = 0,
     seg = 20,
+    tag='ar'
     )
 args = parser.parse_args()
 
 def main():
 
-    args.num_classes = get_num_classes(args.dataset)
+    args.num_classes = get_num_classes(args.dataset, args.tag)
     model = SGN(args.num_classes, args.dataset, args.seg, args)
 
     total = get_n_params(model)
@@ -69,11 +70,13 @@ def main():
 
     scheduler = MultiStepLR(optimizer, milestones=[60, 90, 110], gamma=0.1)
     # Data loading
-    ntu_loaders = NTUDataLoaders(args.dataset, args.case, seg=args.seg)
+    ntu_loaders = NTUDataLoaders(args.dataset, args.case, seg=args.seg, tag=args.tag)
     train_loader = ntu_loaders.get_train_loader(args.batch_size, args.workers)
     val_loader = ntu_loaders.get_val_loader(args.batch_size, args.workers)
     train_size = ntu_loaders.get_train_size()
     val_size = ntu_loaders.get_val_size()
+
+    print(next(iter(train_loader))[0].size())
 
 
     test_loader = ntu_loaders.get_test_loader(32, args.workers)
@@ -81,7 +84,7 @@ def main():
     print('Train on %d samples, validate on %d samples' % (train_size, val_size))
 
     best_epoch = 0
-    output_dir = make_dir(args.dataset)
+    output_dir = make_dir(args.dataset, args.tag)
 
     save_path = os.path.join(output_dir, args.network)
     if not os.path.exists(save_path):
@@ -94,7 +97,7 @@ def main():
 
     lable_path = osp.join(save_path, '%s_lable.txt'% args.case)
     pred_path = osp.join(save_path, '%s_pred.txt' % args.case)
-
+    
     # Training
     if args.train ==1:
         for epoch in range(args.start_epoch, args.max_epochs):
@@ -158,7 +161,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
     for i, (inputs, target) in enumerate(train_loader):
 
         output = model(inputs.cuda())
-        target = target.cuda(async = True)
+        target = target.cuda()
         loss = criterion(output, target)
 
         # measure accuracy and record loss
@@ -188,7 +191,7 @@ def validate(val_loader, model, criterion):
     for i, (inputs, target) in enumerate(val_loader):
         with torch.no_grad():
             output = model(inputs.cuda())
-        target = target.cuda(async=True)
+        target = target.cuda()
         with torch.no_grad():
             loss = criterion(output, target)
 
@@ -209,6 +212,10 @@ def test(test_loader, model, checkpoint, lable_path, pred_path):
     label_output = list()
     pred_output = list()
 
+    import pickle
+    with open('test_data.pkl', 'wb') as f:
+        pickle.dump(test_loader, f)
+
     t_start = time.time()
     for i, (inputs, target) in enumerate(test_loader):
         with torch.no_grad():
@@ -219,7 +226,7 @@ def test(test_loader, model, checkpoint, lable_path, pred_path):
         label_output.append(target.cpu().numpy())
         pred_output.append(output.cpu().numpy())
 
-        acc = accuracy(output.data, target.cuda(async=True))
+        acc = accuracy(output.data, target.cuda())
         acces.update(acc[0], inputs.size(0))
 
 

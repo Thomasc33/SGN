@@ -31,9 +31,10 @@ class NTUDataset(Dataset):
         return [self.x[index], int(self.y[index])]
 
 class NTUDataLoaders(object):
-    def __init__(self, dataset ='NTU', case = 0, aug = 1, seg = 30):
+    def __init__(self, dataset ='NTU', case = 0, aug = 1, seg = 30, tag='ar'):
         self.dataset = dataset
         self.case = case
+        self.tag = tag
         self.aug = aug
         self.seg = seg
         self.create_datasets()
@@ -44,28 +45,28 @@ class NTUDataLoaders(object):
     def get_train_loader(self, batch_size, num_workers):
         if self.aug == 0:
             return DataLoader(self.train_set, batch_size=batch_size,
-                              shuffle=True, num_workers=num_workers,
-                              collate_fn=self.collate_fn_fix_val, pin_memory=False, drop_last=True)
+                              shuffle=True, #num_workers=num_workers,
+                              collate_fn=self.collate_fn_fix_val, drop_last=True)
         elif self.aug ==1:
             return DataLoader(self.train_set, batch_size=batch_size,
-                              shuffle=True, num_workers=num_workers,
-                              collate_fn=self.collate_fn_fix_train, pin_memory=True, drop_last=True)
+                              shuffle=True, #num_workers=num_workers,
+                              collate_fn=self.collate_fn_fix_train, drop_last=True)
 
     def get_val_loader(self, batch_size, num_workers):
         if self.dataset == 'NTU' or self.dataset == 'kinetics' or self.dataset == 'NTU120':
             return DataLoader(self.val_set, batch_size=batch_size,
-                              shuffle=False, num_workers=num_workers,
-                              collate_fn=self.collate_fn_fix_val, pin_memory=True, drop_last=True)
+                              shuffle=False, #num_workers=num_workers,
+                              collate_fn=self.collate_fn_fix_val, drop_last=True)
         else:
             return DataLoader(self.val_set, batch_size=batch_size,
-                              shuffle=False, num_workers=num_workers,
-                              collate_fn=self.collate_fn_fix_val, pin_memory=True, drop_last=True)
+                              shuffle=False, #num_workers=num_workers,
+                              collate_fn=self.collate_fn_fix_val, drop_last=True)
 
 
     def get_test_loader(self, batch_size, num_workers):
         return DataLoader(self.test_set, batch_size=batch_size,
-                          shuffle=False, num_workers=num_workers,
-                          collate_fn=self.collate_fn_fix_test, pin_memory=True, drop_last=True)
+                          shuffle=False, #num_workers=num_workers,
+                          collate_fn=self.collate_fn_fix_test, drop_last=True)
 
     def get_train_size(self):
         return len(self.train_Y)
@@ -82,7 +83,14 @@ class NTUDataLoaders(object):
                 self.metric = 'CS'
             elif self.case == 1:
                 self.metric = 'CV'
-            path = osp.join('./data/ntu', 'NTU_' + self.metric + '.h5')
+            path = osp.join('./data/ntu', 'NTU_' + self.metric + "_" + self.tag + '.h5')
+
+        if self.dataset == 'NTU120':
+            if self.case ==0:
+                self.metric = 'CS'
+            elif self.case == 1:
+                self.metric = 'CV'
+            path = osp.join('./data/ntu120', 'NTU_' + self.metric + "_" + self.tag + '.h5')
 
         f = h5py.File(path , 'r')
         self.train_X = f['x'][:]

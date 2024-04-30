@@ -4,11 +4,10 @@ import os
 import os.path as osp
 import numpy as np
 import pickle
+import pandas as pd
 import logging
 import h5py
 from sklearn.model_selection import train_test_split
-
-is_ar = True
 
 root_path = './'
 stat_path = osp.join(root_path, 'statistics')
@@ -16,8 +15,9 @@ setup_file = osp.join(stat_path, 'setup.txt')
 camera_file = osp.join(stat_path, 'camera.txt')
 performer_file = osp.join(stat_path, 'performer.txt')
 replication_file = osp.join(stat_path, 'replication.txt')
-if is_ar: label_file = osp.join(stat_path, 'label.txt')
-else: label_file = osp.join(stat_path, 'performer.txt')
+# swap these two for either privacy/utility
+# label_file = osp.join(stat_path, 'label.txt') 
+label_file = osp.join(stat_path, 'performer.txt')
 skes_name_file = osp.join(stat_path, 'skes_available_name.txt')
 
 denoised_path = osp.join(root_path, 'denoised_data')
@@ -132,18 +132,14 @@ def align_frames(skes_joints, frames_cnt):
 
 def one_hot_vector(labels):
     num_skes = len(labels)
-    labels_vector = np.zeros((num_skes, 60))
+    labels_vector = np.zeros((num_skes, 2))
     for idx, l in enumerate(labels):
-        labels_vector[idx, l] = 1
-
+        if l == 'M':
+            labels_vector[idx][0] = 1
+        else:
+            labels_vector[idx][1] = 1
+    print(labels_vector)
     return labels_vector
-
-def filter_data(skes_joints, labels, performers, cameras, frames_cnt):
-    # Keep only the data with labels <= 49
-    filtered_indices = [i for i, l in enumerate(labels) if l <= 49]
-    return (skes_joints[filtered_indices], labels[filtered_indices],
-            performers[filtered_indices], cameras[filtered_indices],
-            frames_cnt[filtered_indices])
 
 
 def split_train_val(train_indices, method='sklearn', ratio=0.05):
@@ -175,8 +171,7 @@ def split_dataset(skes_joints, label, performer, camera, evaluation, save_path):
     test_labels = label[test_indices]
 
     # Save data into a .h5 file
-    tag = 'ar' if is_ar else 'ri'
-    h5file = h5py.File(osp.join(save_path, f"NTU_{evaluation}_{tag}.h5"), 'w')
+    h5file = h5py.File(osp.join(save_path, 'NTU_%s_gc.h5' % (evaluation)), 'w')
     # Training set
     h5file.create_dataset('x', data=skes_joints[train_indices])
     train_one_hot_labels = one_hot_vector(train_labels)
@@ -230,6 +225,15 @@ if __name__ == '__main__':
     performer = np.loadtxt(performer_file, dtype=np.int)  # subject id: 1~40
     label = np.loadtxt(label_file, dtype=np.int) - 1  # action label: 0~59
 
+    # Swap label for gender
+    genders = pd.read_csv('./statistics/Genders.csv')
+    genders = genders.set_index("P")["Gender"].to_dict()
+
+    new_label = []
+    for i in performer:
+        new_label.append(genders[i])
+    label = np.array(new_label)
+
     frames_cnt = np.loadtxt(frames_file, dtype=np.int)  # frames_cnt
     skes_name = np.loadtxt(skes_name_file, dtype=np.string_)
 
@@ -239,11 +243,6 @@ if __name__ == '__main__':
     skes_joints = seq_translation(skes_joints)
 
     skes_joints = align_frames(skes_joints, frames_cnt)  # aligned to the same frame length
-    
-    # filter to remove 2 actor actions
-    skes_joints, label, performer, camera, frames_cnt = filter_data(
-        skes_joints, label, performer, camera, frames_cnt
-    )
 
     evaluations = ['CS', 'CV']
     for evaluation in evaluations:
