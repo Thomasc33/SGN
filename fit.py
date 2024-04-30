@@ -24,7 +24,7 @@ def add_fit_args(parser):
                       help='print frequency (default: 10)')
     args.add_argument('-b', '--batch-size', type=int, default=256,
                       help='mini-batch size (default: 256)')
-    args.add_argument('--num-classes', type=int, default=60,
+    args.add_argument('--num-classes', type=int, default=2,
                       help='the number of classes')
     args.add_argument('--case', type=int, default=0,
                       help='select which case')
@@ -36,5 +36,7 @@ def add_fit_args(parser):
                       help='quantity to monitor (default: val_acc)')
     args.add_argument('--seg', type=int, default=20,
                       help='number of segmentation')
+    args.add_argument('--tag', type=str, default='ar',
+                      help='tag for this training')
     return args
 

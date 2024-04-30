@@ -1,0 +1,4 @@
+denoised_data/
+nturgb+d_skeletons/
+raw_data/
+*.h5

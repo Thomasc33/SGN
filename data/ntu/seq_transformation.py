@@ -8,13 +8,16 @@ import logging
 import h5py
 from sklearn.model_selection import train_test_split
 
+is_ar = True
+
 root_path = './'
 stat_path = osp.join(root_path, 'statistics')
 setup_file = osp.join(stat_path, 'setup.txt')
 camera_file = osp.join(stat_path, 'camera.txt')
 performer_file = osp.join(stat_path, 'performer.txt')
 replication_file = osp.join(stat_path, 'replication.txt')
-label_file = osp.join(stat_path, 'label.txt')
+if is_ar: label_file = osp.join(stat_path, 'label.txt')
+else: label_file = osp.join(stat_path, 'performer.txt')
 skes_name_file = osp.join(stat_path, 'skes_available_name.txt')
 
 denoised_path = osp.join(root_path, 'denoised_data')
@@ -135,6 +138,13 @@ def one_hot_vector(labels):
 
     return labels_vector
 
+def filter_data(skes_joints, labels, performers, cameras, frames_cnt):
+    # Keep only the data with labels <= 49
+    filtered_indices = [i for i, l in enumerate(labels) if l <= 49]
+    return (skes_joints[filtered_indices], labels[filtered_indices],
+            performers[filtered_indices], cameras[filtered_indices],
+            frames_cnt[filtered_indices])
+
 
 def split_train_val(train_indices, method='sklearn', ratio=0.05):
     """
@@ -165,7 +175,8 @@ def split_dataset(skes_joints, label, performer, camera, evaluation, save_path):
     test_labels = label[test_indices]
 
     # Save data into a .h5 file
-    h5file = h5py.File(osp.join(save_path, 'NTU_%s.h5' % (evaluation)), 'w')
+    tag = 'ar' if is_ar else 'ri'
+    h5file = h5py.File(osp.join(save_path, f"NTU_{evaluation}_{tag}.h5"), 'w')
     # Training set
     h5file.create_dataset('x', data=skes_joints[train_indices])
     train_one_hot_labels = one_hot_vector(train_labels)
@@ -187,10 +198,8 @@ def get_indices(performer, camera, evaluation='CS'):
     train_indices = np.empty(0)
 
     if evaluation == 'CS':  # Cross Subject (Subject IDs)
-        train_ids = [1,  2,  4,  5,  8,  9,  13, 14, 15, 16,
-                     17, 18, 19, 25, 27, 28, 31, 34, 35, 38]
-        test_ids = [3,  6,  7,  10, 11, 12, 20, 21, 22, 23,
-                    24, 26, 29, 30, 32, 33, 36, 37, 39, 40]
+        train_ids = [1, 2, 4, 5, 8, 9, 13, 14, 15, 16, 17, 18, 19, 25, 27, 28, 31, 34, 35, 38, 45, 46, 47, 49, 50, 52, 53, 54, 55, 56, 57, 58, 59, 70, 74, 78, 80, 81, 82, 83, 84, 85, 86, 89, 91, 92, 93, 94, 95, 97, 98, 100, 103]
+        test_ids = [3,6,7,10,11,12,20,21,22,23,24,26,29,30,32,33,36,37,39,40,41,42,43,44,48,51,60,61,62,63,64,65,66,67,68,69,71,72,73,75,76,77,79,87,88,90,96,99,101,102,104,105,106]
 
         # Get indices of test data
         for idx in test_ids:
@@ -230,6 +239,11 @@ if __name__ == '__main__':
     skes_joints = seq_translation(skes_joints)
 
     skes_joints = align_frames(skes_joints, frames_cnt)  # aligned to the same frame length
+    
+    # filter to remove 2 actor actions
+    skes_joints, label, performer, camera, frames_cnt = filter_data(
+        skes_joints, label, performer, camera, frames_cnt
+    )
 
     evaluations = ['CS', 'CV']
     for evaluation in evaluations:
