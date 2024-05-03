@@ -1,0 +1,19 @@
+Case 0 = Cross subject
+Case 1 = Cross View
+Tags = ar, ri, gc (action recognition, re-identification, gender classification)
+Datasets = NTU, NTU120
+
+
+
+
+Examples:
+
+NTU 60
+python  main.py --network SGN --train 1 --case 0 --dataset NTU --tag ar
+python  main.py --network SGN --train 1 --case 0 --dataset NTU --tag ri
+python  main.py --network SGN --train 1 --case 0 --dataset NTU --tag gc
+
+NTU 60+120
+python  main.py --network SGN --train 1 --case 0 --dataset NTU120 --tag ar
+python  main.py --network SGN --train 1 --case 0 --dataset NTU120 --tag ri
+python  main.py --network SGN --train 1 --case 0 --dataset NTU120 --tag gc
