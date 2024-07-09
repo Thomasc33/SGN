@@ -31,7 +31,7 @@ class NTUDataset(Dataset):
         return [self.x[index], int(self.y[index])]
 
 class NTUDataLoaders(object):
-    def __init__(self, dataset ='NTU', case = 0, aug = 1, seg = 30, tag='ar'):
+    def __init__(self, dataset ='NTU', case = 0, aug = 1, seg = 30, tag='ar', maskidx=[]):
         self.dataset = dataset
         self.case = case
         self.tag = tag
@@ -41,6 +41,19 @@ class NTUDataLoaders(object):
         self.train_set = NTUDataset(self.train_X, self.train_Y)
         self.val_set = NTUDataset(self.val_X, self.val_Y)
         self.test_set = NTUDataset(self.test_X, self.test_Y)
+
+        # data is shape 300, 150
+        # mask the 3 channels of each joint for both actors
+        # a1x1, a1y1, a1z1, a1x2, a1y2, a1z2, ..., a1z25, a2x1, a2y1, a2z1, a2x2, a2y2, a2z2
+        self.maskidx = []
+        if len(maskidx) > 0:
+            for i in maskidx:
+                self.maskidx.append(i*3)
+                self.maskidx.append(i*3+1)
+                self.maskidx.append(i*3+2)
+                self.maskidx.append(i*3+75)
+                self.maskidx.append(i*3+1+75)
+                self.maskidx.append(i*3+2+75)
 
     def get_train_loader(self, batch_size, num_workers):
         if self.aug == 0:
@@ -160,16 +173,19 @@ class NTUDataLoaders(object):
         idx = range(len(x))
         y = np.array(y)
 
-
         x = torch.stack([torch.from_numpy(x[i]) for i in idx], 0)
         y = torch.LongTensor(y)
-
         return [x, y]
 
     def Tolist_fix(self, joints, y, train = 1):
         seqs = []
 
         for idx, seq in enumerate(joints):
+            # masking logic
+            if len(self.maskidx) > 0:
+                seq[:,self.maskidx] = 0
+            print(seq[0])
+
             zero_row = []
             for i in range(len(seq)):
                 if (seq[i, :] == np.zeros((1, 150))).all():
