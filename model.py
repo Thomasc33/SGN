@@ -23,7 +23,6 @@ class SGN(nn.Module):
             self.spa = self.spa.permute(0, 3, 2, 1).cuda()
             self.tem = self.one_hot(32 * 5, self.seg, num_joint)
             self.tem = self.tem.permute(0, 3, 1, 2).cuda()
-
         self.tem_embed = embed(self.seg, 64*4, norm=False, bias=bias)
         self.spa_embed = embed(num_joint, 64, norm=False, bias=bias)
         self.joint_embed = embed(3, 64, norm=True, bias=bias)
@@ -47,7 +46,6 @@ class SGN(nn.Module):
 
 
     def forward(self, input):
-        
         # Dynamic Representation
         bs, step, dim = input.size()
         num_joints = dim //3

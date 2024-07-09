@@ -38,5 +38,8 @@ def add_fit_args(parser):
                       help='number of segmentation')
     args.add_argument('--tag', type=str, default='ar',
                       help='tag for this training')
+    args.add_argument('--mask', type=int, default=[], nargs='+',
+                      help='joints to mask, 0 indexed')
+                      
     return args
 
