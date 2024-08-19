@@ -77,9 +77,6 @@ def main():
     train_size = ntu_loaders.get_train_size()
     val_size = ntu_loaders.get_val_size()
 
-    print(next(iter(train_loader))[0].size())
-
-
     test_loader = ntu_loaders.get_test_loader(32, args.workers)
 
     print('Train on %d samples, validate on %d samples' % (train_size, val_size))

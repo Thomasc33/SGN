@@ -105,6 +105,13 @@ class NTUDataLoaders(object):
                 self.metric = 'CV'
             path = osp.join('./data/ntu120', 'NTU_' + self.metric + "_" + self.tag + '.h5')
 
+        if self.dataset == 'ETRI':
+            if self.case ==0:
+                self.metric = 'CS'
+            elif self.case == 1:
+                self.metric = 'CV'
+            path = osp.join('./data/etri', 'ETRI_' + self.metric + "_" + self.tag + '.h5')
+
         f = h5py.File(path , 'r')
         self.train_X = f['x'][:]
         self.train_Y = np.argmax(f['y'][:],-1)
@@ -143,6 +150,8 @@ class NTUDataLoaders(object):
             elif self.case == 1:
                 theta = 0.5
         elif self.dataset == 'NTU120':
+            theta = 0.3
+        elif self.dataset == 'ETRI':
             theta = 0.3
 
         #### data augmentation
@@ -184,7 +193,6 @@ class NTUDataLoaders(object):
             # masking logic
             if len(self.maskidx) > 0:
                 seq[:,self.maskidx] = 0
-            print(seq[0])
 
             zero_row = []
             for i in range(len(seq)):
