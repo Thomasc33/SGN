@@ -210,10 +210,6 @@ def test(test_loader, model, checkpoint, lable_path, pred_path):
     label_output = list()
     pred_output = list()
 
-    import pickle
-    with open('test_data.pkl', 'wb') as f:
-        pickle.dump(test_loader, f)
-
     t_start = time.time()
     for i, (inputs, target) in enumerate(test_loader):
         with torch.no_grad():
