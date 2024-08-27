@@ -86,6 +86,14 @@ class SGN(nn.Module):
         y_onehot = y_onehot.repeat(bs, tem, 1, 1)
 
         return y_onehot
+    
+    def eval_single(self, x):
+        self.spa = self.one_hot(1, 25, self.seg)
+        self.spa = self.spa.permute(0, 3, 2, 1).cuda()
+        self.tem = self.one_hot(1, self.seg, 25)
+        self.tem = self.tem.permute(0, 3, 1, 2).cuda()
+
+        return self.forward(x)
 
 class norm_data(nn.Module):
     def __init__(self, dim= 64):
