@@ -42,6 +42,8 @@ def add_fit_args(parser):
                       help='joints to mask, 0 indexed')
     args.add_argument('--noise-variance', type=float, default=0,
                       help='variance of the noise')
+    args.add_argument('--load-dir', type=str, default=None,
+                      help='directory to load model')
                       
     return args
 

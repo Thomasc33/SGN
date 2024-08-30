@@ -39,6 +39,7 @@ parser.set_defaults(
     tag='ar',
     mask=[],
     noise_variance=0,
+    load_dir=None,
     )
 args = parser.parse_args()
 
@@ -83,7 +84,10 @@ def main():
     print('Train on %d samples, validate on %d samples' % (train_size, val_size))
 
     best_epoch = 0
-    output_dir = make_dir(args.dataset, args.tag)
+    if args.load_dir:
+        output_dir = os.path.join(args.load_dir)
+    else:
+        output_dir = make_dir(args.dataset, args.tag)
 
     save_path = os.path.join(output_dir, args.network)
     if not os.path.exists(save_path):
