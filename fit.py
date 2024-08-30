@@ -40,6 +40,8 @@ def add_fit_args(parser):
                       help='tag for this training')
     args.add_argument('--mask', type=int, default=[], nargs='+',
                       help='joints to mask, 0 indexed')
+    args.add_argument('--noise-variance', type=float, default=0,
+                      help='variance of the noise')
                       
     return args
 

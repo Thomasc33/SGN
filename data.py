@@ -31,12 +31,13 @@ class NTUDataset(Dataset):
         return [self.x[index], int(self.y[index])]
 
 class NTUDataLoaders(object):
-    def __init__(self, dataset ='NTU', case = 0, aug = 1, seg = 30, tag='ar', maskidx=[]):
+    def __init__(self, dataset ='NTU', case = 0, aug = 1, seg = 30, tag='ar', maskidx=[], noise_variance=0):
         self.dataset = dataset
         self.case = case
         self.tag = tag
         self.aug = aug
         self.seg = seg
+        self.noise_variance = noise_variance
         self.create_datasets()
         self.train_set = NTUDataset(self.train_X, self.train_Y)
         self.val_set = NTUDataset(self.val_X, self.val_Y)
@@ -126,6 +127,21 @@ class NTUDataLoaders(object):
         self.train_Y = np.concatenate([self.train_Y, self.val_Y], axis=0)
         self.val_X = self.test_X
         self.val_Y = self.test_Y
+
+        # Add Noise
+        if self.noise_variance > 0:
+            # Add noise with same variance to all joints
+            self.train_X = self.train_X + np.random.normal(0, self.noise_variance, self.train_X.shape)
+            self.val_X = self.val_X + np.random.normal(0, self.noise_variance, self.val_X.shape)
+
+            # TBI: Add joint specific noise to joints
+
+            # TBI: Removal of joints/adding noise to joints with high privacy leakage as found in lime
+
+        # Ensure data is float tensor
+        self.train_X = self.train_X.astype(np.float32)
+        self.val_X = self.val_X.astype(np.float32)
+        self.test_X = self.test_X.astype(np.float32)
 
     def collate_fn_fix_train(self, batch):
         """Puts each data field into a tensor with outer dimension batch size
