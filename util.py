@@ -7,14 +7,17 @@ import matplotlib.pyplot as plt
 import torch.nn as nn
 import torch
 import os.path as osp
+import datetime
 
 def make_dir(dataset, tag):
+    # date string
+    now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     if dataset == 'NTU':
-        output_dir = os.path.join(f'./results/NTU{tag}/')
+        output_dir = os.path.join(f'./results/NTU{tag}/{now}/')
     elif dataset == 'NTU120':
-        output_dir = os.path.join(f'./results/NTU120{tag}/')
+        output_dir = os.path.join(f'./results/NTU120{tag}/{now}/')
     elif dataset == 'ETRI':
-        output_dir = os.path.join(f'./results/ETRI{tag}/')        
+        output_dir = os.path.join(f'./results/ETRI{tag}/{now}/')
 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
