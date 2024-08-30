@@ -11,7 +11,7 @@ import datetime
 
 def make_dir(dataset, tag):
     # date string
-    now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    now = datetime.datetime.now().strftime('%Y-%m-%d %H%M%S')
     if dataset == 'NTU':
         output_dir = os.path.join(f'./results/NTU{tag}/{now}/')
     elif dataset == 'NTU120':
