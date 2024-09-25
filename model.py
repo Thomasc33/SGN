@@ -48,18 +48,25 @@ class SGN(nn.Module):
     def forward(self, input):
         # Dynamic Representation
         bs, step, dim = input.size()
-        num_joints = dim //3
+
+        self.spa = self.one_hot(bs, 25, self.seg)
+        self.spa = self.spa.permute(0, 3, 2, 1).cuda()
+        self.tem = self.one_hot(bs, self.seg, 25)
+        self.tem = self.tem.permute(0, 3, 1, 2).cuda()
+
+        num_joints = dim // 3
         input = input.view((bs, step, num_joints, 3))
         input = input.permute(0, 3, 2, 1).contiguous()
         dif = input[:, :, :, 1:] - input[:, :, :, 0:-1]
-        dif = torch.cat([dif.new(bs, dif.size(1), num_joints, 1).zero_(), dif], dim=-1)
+        dif = torch.cat(
+            [dif.new(bs, dif.size(1), num_joints, 1).zero_(), dif], dim=-1)
         pos = self.joint_embed(input)
         tem1 = self.tem_embed(self.tem)
         spa1 = self.spa_embed(self.spa)
         dif = self.dif_embed(dif)
         dy = pos + dif
         # Joint-level Module
-        input= torch.cat([dy, spa1], 1)
+        input = torch.cat([dy, spa1], 1)
         g = self.compute_g1(input)
         input = self.gcn1(input, g)
         input = self.gcn2(input, g)
