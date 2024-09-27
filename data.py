@@ -247,17 +247,22 @@ class NTUDataLoaders(object):
                 
                 # Calculate scale and variance
                 joints = range(25)
-                gamma = np.array([1/importance[joint] for joint in range(25)], dtype=np.float32)
+                epsilon = 1e-8
+                gamma = np.array([1/(importance[joint] + epsilon) for joint in range(25)], dtype=np.float32)
+
+                # Clip gamma
+                gamma = gamma / np.max(gamma)
                 
                 # Expand to 75
                 gamma = np.repeat(gamma, 3)
         
                 # Calculate sensitivity
-                epsilons = [gamma[i]/np.sum(gamma) for i in range(75)]
+                sum_gamma = np.sum(gamma)
+                epsilons = gamma / sum_gamma
 
                 # Add noise
                 for i in range(75):
-                    seq[:,i] = seq[:,i] + np.random.laplace(self.noise_variance, epsilons[i].item(), seq[:,i].shape)
+                    seq[:,i] = seq[:,i] + np.random.laplace(0, self.noise_variance * epsilons[i].item(), seq[:,i].shape)
 
             zero_row = []
             for i in range(len(seq)):
