@@ -40,8 +40,18 @@ parser.set_defaults(
     mask=[],
     noise_variance=0,
     load_dir=None,
+    smart_noise=False,
+    smart_masking=False,
+    alpha=0,
+    beta=0,
     )
 args = parser.parse_args()
+
+assert args.smart_masking == 0 or args.smart_noise == 0, "Smart masking and smart noise cannot be applied at the same time"
+assert args.smart_masking == 0 or 'maskidx' not in args, "Smart masking cannot be applied with masking"
+assert args.smart_noise == 0 or args.noise_variance == 0, "Smart noise cannot be applied with noise variance"
+assert args.dataset in ['NTU', 'NTU120', 'ETRI'], "Dataset not found"
+assert args.dataset == 'ETRI' or args.tag in ['ar', 'ri'], "ETRI dataset only supports ar and ri tags"
 
 def main():
 
@@ -73,7 +83,10 @@ def main():
 
     scheduler = MultiStepLR(optimizer, milestones=[60, 90, 110], gamma=0.1)
     # Data loading
-    ntu_loaders = NTUDataLoaders(args.dataset, args.case, seg=args.seg, tag=args.tag, maskidx=args.mask, noise_variance=args.noise_variance)
+    ntu_loaders = NTUDataLoaders(args.dataset, args.case, seg=args.seg, tag=args.tag, \
+                                    maskidx=args.mask, noise_variance=args.noise_variance, \
+                                    smart_noise=args.smart_noise==1, smart_masking=args.smart_masking==1, \
+                                    alpha=args.alpha, beta=args.beta)
     train_loader = ntu_loaders.get_train_loader(args.batch_size, args.workers)
     val_loader = ntu_loaders.get_val_loader(args.batch_size, args.workers)
     train_size = ntu_loaders.get_train_size()

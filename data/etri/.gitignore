@@ -3,3 +3,5 @@ csv data/
 nturgb+d_skeletons/
 denoised_data/
 raw_data/
+*.h5
+*.pkl

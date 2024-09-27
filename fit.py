@@ -44,6 +44,14 @@ def add_fit_args(parser):
                       help='variance of the noise')
     args.add_argument('--load-dir', type=str, default=None,
                       help='directory to load model')
+    args.add_argument('--smart-noise', type=int, default=0,
+                      help='use smart noise addition')
+    args.add_argument('--smart-masking', type=int, default=0,
+                        help='use smart masking')
+    args.add_argument('--alpha', type=float, default=0.1,
+                        help='alpha for importance score')
+    args.add_argument('--beta', type=float, default=0.2,
+                        help='beta for importance score')
                       
     return args
 

@@ -1,7 +1,7 @@
 Case 0 = Cross subject
 Case 1 = Cross View
 Tags = ar, ri, gc (action recognition, re-identification, gender classification)
-Datasets = NTU, NTU120
+Datasets = NTU, NTU120, ETRI
 
 
 

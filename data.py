@@ -17,6 +17,7 @@ else:
     import pickle
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
+from explanation import Explanation
 
 
 class NTUDataset(Dataset):
@@ -31,13 +32,19 @@ class NTUDataset(Dataset):
         return [self.x[index], int(self.y[index])]
 
 class NTUDataLoaders(object):
-    def __init__(self, dataset ='NTU', case = 0, aug = 1, seg = 30, tag='ar', maskidx=[], noise_variance=0):
+    def __init__(self, dataset ='NTU', case = 0, aug = 1, seg = 30, tag='ar', maskidx=[], noise_variance=0, smart_noise=False, smart_masking=False, alpha=0.1, beta=0.2):
         self.dataset = dataset
         self.case = case
         self.tag = tag
         self.aug = aug
         self.seg = seg
         self.noise_variance = noise_variance
+        self.smart_noise = smart_noise
+        self.smart_masking = smart_masking
+        if self.smart_masking or self.smart_noise:
+            self.explanation = Explanation(dataset)
+        self.alpha = alpha
+        self.beta = beta
         self.create_datasets()
         self.train_set = NTUDataset(self.train_X, self.train_Y)
         self.val_set = NTUDataset(self.val_X, self.val_Y)
@@ -134,10 +141,6 @@ class NTUDataLoaders(object):
             self.train_X = self.train_X + np.random.normal(0, self.noise_variance, self.train_X.shape)
             self.val_X = self.val_X + np.random.normal(0, self.noise_variance, self.val_X.shape)
 
-            # TBI: Add joint specific noise to joints
-
-            # TBI: Removal of joints/adding noise to joints with high privacy leakage as found in lime
-
         # Ensure data is float tensor
         self.train_X = self.train_X.astype(np.float32)
         self.val_X = self.val_X.astype(np.float32)
@@ -209,6 +212,28 @@ class NTUDataLoaders(object):
             # masking logic
             if len(self.maskidx) > 0:
                 seq[:,self.maskidx] = 0
+
+            # smart masking
+            if self.smart_masking:
+                importance = self.explanation.importance_score(seq, y[idx], is_action=self.tag == 'ar', alpha=self.alpha)
+
+                # Mask top beta% of joints
+                sorted_joints = sorted(importance.items(), key=lambda item: item[1], reverse=True)
+
+                # Get the top beta% of joints
+                top_joints = sorted_joints[:max(1, math.floor(len(sorted_joints) * self.beta))]
+                joints = [joint for joint, score in top_joints]
+
+                maskidx = []
+                for i in joints:
+                    maskidx.append(i*3)
+                    maskidx.append(i*3+1)
+                    maskidx.append(i*3+2)
+                    maskidx.append(i*3+75)
+                    maskidx.append(i*3+1+75)
+                    maskidx.append(i*3+2+75)
+
+                seq[:,maskidx] = 0
 
             zero_row = []
             for i in range(len(seq)):
