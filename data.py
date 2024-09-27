@@ -19,6 +19,12 @@ from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 from explanation import Explanation
 
+sensitivity = {
+    'NTU': [8, 3, 8, 8, 3, 8, 8, 4, 8, 8, 4, 8, 8, 3, 8, 8, 4, 8, 7, 4, 8, 7, 5, 8, 8, 3, 8, 7, 3, 8, 7, 4, 8, 8, 4, 8, 8, 3, 8, 8, 4, 8, 8, 4, 8, 8, 4, 8, 8, 3, 8, 8, 4, 8, 8, 4, 8, 8, 4, 8, 8, 3, 8, 7, 5, 8, 7, 5, 8, 8, 4, 8, 8, 4, 8],
+    'NTU120': [],
+    'ETRI': []
+}
+
 
 class NTUDataset(Dataset):
     def __init__(self, x, y):
@@ -136,7 +142,7 @@ class NTUDataLoaders(object):
         self.val_Y = self.test_Y
 
         # Add Noise
-        if self.noise_variance > 0:
+        if self.noise_variance > 0 and not self.smart_noise:
             # Add noise with same variance to all joints
             self.train_X = self.train_X + np.random.normal(0, self.noise_variance, self.train_X.shape)
             self.val_X = self.val_X + np.random.normal(0, self.noise_variance, self.val_X.shape)
@@ -234,6 +240,24 @@ class NTUDataLoaders(object):
                     maskidx.append(i*3+2+75)
 
                 seq[:,maskidx] = 0
+
+            # smart noise
+            if self.smart_noise:
+                importance = self.explanation.importance_score(seq, y[idx], is_action=self.tag == 'ar', alpha=self.alpha)
+                
+                # Calculate scale and variance
+                joints = range(25)
+                gamma = np.array([1/importance[joint] for joint in range(25)], dtype=np.float32)
+                
+                # Expand to 75
+                gamma = np.repeat(gamma, 3)
+        
+                # Calculate sensitivity
+                epsilons = [gamma[i]/np.sum(gamma) for i in range(75)]
+
+                # Add noise
+                for i in range(75):
+                    seq[:,i] = seq[:,i] + np.random.laplace(self.noise_variance, epsilons[i].item(), seq[:,i].shape)
 
             zero_row = []
             for i in range(len(seq)):

@@ -49,7 +49,6 @@ args = parser.parse_args()
 
 assert args.smart_masking == 0 or args.smart_noise == 0, "Smart masking and smart noise cannot be applied at the same time"
 assert args.smart_masking == 0 or 'maskidx' not in args, "Smart masking cannot be applied with masking"
-assert args.smart_noise == 0 or args.noise_variance == 0, "Smart noise cannot be applied with noise variance"
 assert args.dataset in ['NTU', 'NTU120', 'ETRI'], "Dataset not found"
 assert args.dataset == 'ETRI' or args.tag in ['ar', 'ri'], "ETRI dataset only supports ar and ri tags"
 
