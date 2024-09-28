@@ -245,24 +245,40 @@ class NTUDataLoaders(object):
             if self.smart_noise:
                 importance = self.explanation.importance_score(seq, y[idx], is_action=self.tag == 'ar', alpha=self.alpha)
                 
-                # Calculate scale and variance
-                joints = range(25)
+                # Shift importance scores to be non-negative
+                min_importance = min(importance.values())
+                if min_importance < 0:
+                    importance = {joint: score - min_importance for joint, score in importance.items()}
+                else:
+                    importance = {joint: score for joint, score in importance.items()}
+                
+                # Normalize importance scores to sum to 1
+                total_importance = sum(importance.values())
+                if total_importance == 0:
+                    # Assign equal importance if total is zero
+                    importance = {joint: 1 for joint in range(25)}
+                    total_importance = sum(importance.values())
+                importance = {joint: score / total_importance for joint, score in importance.items()}
+                
+                # Calculate gamma
                 epsilon = 1e-8
-                gamma = np.array([1/(importance[joint] + epsilon) for joint in range(25)], dtype=np.float32)
-
-                # Clip gamma
+                gamma = np.array([1 / (importance[joint] + epsilon) for joint in range(25)], dtype=np.float32)
+                
+                # Normalize gamma
                 gamma = gamma / np.max(gamma)
                 
                 # Expand to 75
                 gamma = np.repeat(gamma, 3)
-        
-                # Calculate sensitivity
+                
+                # Calculate epsilons
                 sum_gamma = np.sum(gamma)
                 epsilons = gamma / sum_gamma
-
+                
                 # Add noise
                 for i in range(75):
-                    seq[:,i] = seq[:,i] + np.random.laplace(0, self.noise_variance * epsilons[i].item(), seq[:,i].shape)
+                    scale = self.noise_variance * epsilons[i].item()
+                    seq[:, i] = seq[:, i] + np.random.laplace(0, scale, seq[:, i].shape)
+
 
             zero_row = []
             for i in range(len(seq)):

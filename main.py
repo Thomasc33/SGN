@@ -42,8 +42,8 @@ parser.set_defaults(
     load_dir=None,
     smart_noise=False,
     smart_masking=False,
-    alpha=0,
-    beta=0,
+    alpha=0.1,
+    beta=0.2,
     )
 args = parser.parse_args()
 
