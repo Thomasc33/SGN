@@ -36,3 +36,9 @@ python  main.py --network SGN --train 1 --case 0 --dataset NTU --tag ar --mask 1
 
 Noise Variance:
 --noise-variance 0
+
+Smart Masking:
+--smart-masking 1
+
+Smart Noise:
+--smart-noise 1

@@ -100,12 +100,28 @@ class Explanation():
         normalized_importances_ri = {joint: importance / total_importance_ri for joint, importance in joint_importances_ri.items()}
 
         # Now compute the importance score using normalized attributions
-        importance_score = {
+        importance = {
             joint: normalized_importances_ri[joint] - alpha * (1 - normalized_importances_ar[joint])
             for joint in range(self.joints)
         }
 
-        return importance_score
+        # Shift importance scores to be non-negative
+        min_importance = min(importance.values())
+        if min_importance < 0:
+            importance = {joint: score - min_importance for joint, score in importance.items()}
+        else:
+            importance = {joint: score for joint, score in importance.items()}
+        
+        # Normalize importance scores to sum to 1
+        total_importance = sum(importance.values())
+        if total_importance == 0:
+            # Assign equal importance if total is zero
+            importance = {joint: 1 for joint in range(self.joints)}
+            total_importance = sum(importance.values())
+        importance = {joint: score / total_importance for joint, score in importance.items()}
+
+        return importance
+
 
     def reshape_skeleton(self, skeleton):
         """

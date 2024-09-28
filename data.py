@@ -245,21 +245,6 @@ class NTUDataLoaders(object):
             if self.smart_noise:
                 importance = self.explanation.importance_score(seq, y[idx], is_action=self.tag == 'ar', alpha=self.alpha)
                 
-                # Shift importance scores to be non-negative
-                min_importance = min(importance.values())
-                if min_importance < 0:
-                    importance = {joint: score - min_importance for joint, score in importance.items()}
-                else:
-                    importance = {joint: score for joint, score in importance.items()}
-                
-                # Normalize importance scores to sum to 1
-                total_importance = sum(importance.values())
-                if total_importance == 0:
-                    # Assign equal importance if total is zero
-                    importance = {joint: 1 for joint in range(25)}
-                    total_importance = sum(importance.values())
-                importance = {joint: score / total_importance for joint, score in importance.items()}
-                
                 # Calculate gamma
                 epsilon = 1e-8
                 gamma = np.array([1 / (importance[joint] + epsilon) for joint in range(25)], dtype=np.float32)
