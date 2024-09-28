@@ -43,8 +43,8 @@ class Explanation():
 
         self.sgn_ar = SGN(self.num_classes, None, 20, args, 0).cuda()
         self.sgn_priv = SGN(self.num_actors, None, 20, args, 0).cuda()
-        self.sgn_ar.load_state_dict(torch.load(datasets[dataset]['ar_model'])['state_dict'], strict=False)
-        self.sgn_priv.load_state_dict(torch.load(datasets[dataset]['ri_model'])['state_dict'], strict=False)
+        self.sgn_ar.load_state_dict(torch.load(datasets[dataset]['ar_model'], weights_only=True)['state_dict'], strict=False)
+        self.sgn_priv.load_state_dict(torch.load(datasets[dataset]['ri_model'], weights_only=True)['state_dict'], strict=False)
         self.sgn_ar.eval()
         self.sgn_priv.eval()
 

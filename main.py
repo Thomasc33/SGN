@@ -221,7 +221,7 @@ def validate(val_loader, model, criterion):
 def test(test_loader, model, checkpoint, lable_path, pred_path):
     acces = AverageMeter()
     # load learnt model that obtained best performance on validation set
-    model.load_state_dict(torch.load(checkpoint)['state_dict'])
+    model.load_state_dict(torch.load(checkpoint, weights_only=True)['state_dict'])
     model.eval()
 
     label_output = list()
