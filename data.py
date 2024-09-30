@@ -246,12 +246,8 @@ class NTUDataLoaders(object):
                 importance = self.explanation.importance_score(seq, y[idx], is_action=self.tag == 'ar', alpha=self.alpha)
                 
                 # Calculate gamma
-                epsilon = 1e-8
-                gamma = np.array([1 / (importance[joint] + epsilon) for joint in range(25)], dtype=np.float32)
-                
-                # Normalize gamma
-                gamma = gamma / np.max(gamma)
-                
+                gamma = np.exp(-np.array([importance[joint] for joint in range(25)]))
+
                 # Expand to 75
                 gamma = np.repeat(gamma, 3)
                 
@@ -261,7 +257,7 @@ class NTUDataLoaders(object):
                 
                 # Add noise
                 for i in range(75):
-                    scale = self.noise_variance * epsilons[i].item()
+                    scale = sensitivity[self.dataset][i] / epsilons[i].item()
                     seq[:, i] = seq[:, i] + np.random.laplace(0, scale, seq[:, i].shape)
 
 
