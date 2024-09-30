@@ -38,13 +38,12 @@ class NTUDataset(Dataset):
         return [self.x[index], int(self.y[index])]
 
 class NTUDataLoaders(object):
-    def __init__(self, dataset ='NTU', case = 0, aug = 1, seg = 30, tag='ar', maskidx=[], noise_variance=0, smart_noise=False, smart_masking=False, naive_noise=False, alpha=0.1, beta=0.2, epsilon=1):
+    def __init__(self, dataset ='NTU', case = 0, aug = 1, seg = 30, tag='ar', maskidx=[], smart_noise=False, smart_masking=False, naive_noise=False, alpha=0.1, beta=0.2, epsilon=1):
         self.dataset = dataset
         self.case = case
         self.tag = tag
         self.aug = aug
         self.seg = seg
-        self.noise_variance = noise_variance
         self.smart_noise = smart_noise
         self.smart_masking = smart_masking
         self.naive_noise = naive_noise

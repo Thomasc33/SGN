@@ -40,13 +40,13 @@ def add_fit_args(parser):
                       help='tag for this training')
     args.add_argument('--mask', type=int, default=[], nargs='+',
                       help='joints to mask, 0 indexed')
-    args.add_argument('--noise-variance', type=float, default=0,
-                      help='variance of the noise')
     args.add_argument('--load-dir', type=str, default=None,
                       help='directory to load model')
     args.add_argument('--smart-noise', type=int, default=0,
                       help='use smart noise addition')
     args.add_argument('--smart-masking', type=int, default=0,
+                        help='use smart masking')
+    args.add_argument('--naive-noise', type=int, default=0,
                         help='use smart masking')
     args.add_argument('--alpha', type=float, default=0.1,
                         help='alpha for importance score')
