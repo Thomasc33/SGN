@@ -66,8 +66,8 @@ class Explanation():
         input_tensor = torch.tensor(reshaped_skeleton, dtype=torch.float32).unsqueeze(0).cuda()
         
         # Compute attributions for both models
-        ar_attribution = self.ig_ar.attribute(input_tensor, target=label if is_action else 0)
-        ri_attribution = self.ig_ri.attribute(input_tensor, target=0 if is_action else label)
+        ar_attribution = self.ig_ar.attribute(input_tensor, target=label if is_action else 0).abs()
+        ri_attribution = self.ig_ri.attribute(input_tensor, target=0 if is_action else label).abs()
 
         joint_importances_ar = {}
         joint_importances_ri = {}
@@ -80,8 +80,8 @@ class Explanation():
             joint_attributions_ri = ri_attribution[0, :, joint_indices]
             
             # Sum over frames and coords
-            joint_importance_ar = joint_attributions_ar.abs().sum().item()
-            joint_importance_ri = joint_attributions_ri.abs().sum().item()
+            joint_importance_ar = joint_attributions_ar.sum().item()
+            joint_importance_ri = joint_attributions_ri.sum().item()
 
             joint_importances_ar[joint] = joint_importance_ar
             joint_importances_ri[joint] = joint_importance_ri
@@ -104,21 +104,6 @@ class Explanation():
             joint: normalized_importances_ri[joint] + alpha * (1 - normalized_importances_ar[joint])
             for joint in range(self.joints)
         }
-
-        # Shift importance scores to be non-negative
-        min_importance = min(importance.values())
-        if min_importance < 0:
-            importance = {joint: score - min_importance for joint, score in importance.items()}
-        else:
-            importance = {joint: score for joint, score in importance.items()}
-        
-        # Normalize importance scores to sum to 1
-        total_importance = sum(importance.values())
-        if total_importance == 0:
-            # Assign equal importance if total is zero
-            importance = {joint: 1 for joint in range(self.joints)}
-            total_importance = sum(importance.values())
-        importance = {joint: score / total_importance for joint, score in importance.items()}
 
         return importance
 
