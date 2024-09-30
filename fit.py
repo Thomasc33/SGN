@@ -52,6 +52,8 @@ def add_fit_args(parser):
                         help='alpha for importance score')
     args.add_argument('--beta', type=float, default=0.2,
                         help='beta for importance score')
+    args.add_argument('--epsilon', type=float, default=1.0,
+                        help='epsilon for importance score')
                       
     return args
 

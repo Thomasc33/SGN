@@ -38,7 +38,7 @@ class NTUDataset(Dataset):
         return [self.x[index], int(self.y[index])]
 
 class NTUDataLoaders(object):
-    def __init__(self, dataset ='NTU', case = 0, aug = 1, seg = 30, tag='ar', maskidx=[], noise_variance=0, smart_noise=False, smart_masking=False, alpha=0.1, beta=0.2):
+    def __init__(self, dataset ='NTU', case = 0, aug = 1, seg = 30, tag='ar', maskidx=[], noise_variance=0, smart_noise=False, smart_masking=False, naive_noise=False, alpha=0.1, beta=0.2, epsilon=1):
         self.dataset = dataset
         self.case = case
         self.tag = tag
@@ -47,10 +47,12 @@ class NTUDataLoaders(object):
         self.noise_variance = noise_variance
         self.smart_noise = smart_noise
         self.smart_masking = smart_masking
+        self.naive_noise = naive_noise
         if self.smart_masking or self.smart_noise:
             self.explanation = Explanation(dataset)
         self.alpha = alpha
         self.beta = beta
+        self.epsilon = epsilon
         self.create_datasets()
         self.train_set = NTUDataset(self.train_X, self.train_Y)
         self.val_set = NTUDataset(self.val_X, self.val_Y)
@@ -142,10 +144,10 @@ class NTUDataLoaders(object):
         self.val_Y = self.test_Y
 
         # Add Noise
-        if self.noise_variance > 0 and not self.smart_noise:
+        if self.naive_noise:
             # Add noise with same variance to all joints
-            self.train_X = self.train_X + np.random.normal(0, self.noise_variance, self.train_X.shape)
-            self.val_X = self.val_X + np.random.normal(0, self.noise_variance, self.val_X.shape)
+            self.train_X = self.train_X + np.random.laplace(0, self.epsilon/75, self.train_X.shape)
+            self.val_X = self.val_X + np.random.laplace(0, self.epsilon/75, self.val_X.shape)
 
         # Ensure data is float tensor
         self.train_X = self.train_X.astype(np.float32)
@@ -247,13 +249,13 @@ class NTUDataLoaders(object):
                 
                 # Calculate gamma
                 gamma = np.exp(-np.array([importance[joint] for joint in range(25)]))
-
+                
                 # Expand to 75
                 gamma = np.repeat(gamma, 3)
                 
                 # Calculate epsilons
                 sum_gamma = np.sum(gamma)
-                epsilons = gamma / sum_gamma
+                epsilons = (gamma / sum_gamma) * self.epsilon
                 
                 # Add noise
                 for i in range(75):
