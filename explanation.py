@@ -101,7 +101,7 @@ class Explanation():
 
         # Now compute the importance score using normalized attributions
         importance = {
-            joint: normalized_importances_ri[joint] - alpha * (1 - normalized_importances_ar[joint])
+            joint: normalized_importances_ri[joint] + alpha * (1 - normalized_importances_ar[joint])
             for joint in range(self.joints)
         }
 
