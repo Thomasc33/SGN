@@ -48,12 +48,12 @@ def add_fit_args(parser):
                         help='use smart masking')
     args.add_argument('--naive-noise', type=int, default=0,
                         help='use smart masking')
-    args.add_argument('--alpha', type=float, default=0.1,
+    args.add_argument('--alpha', type=float, default=0.9,
                         help='alpha for importance score')
     args.add_argument('--beta', type=float, default=0.2,
                         help='beta for importance score')
-    args.add_argument('--epsilon', type=float, default=1.0,
-                        help='epsilon for importance score')
+    args.add_argument('--sigma', type=float, default=0.01,
+                        help='standard deviation for noise')
                       
     return args
 
