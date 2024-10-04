@@ -44,7 +44,7 @@ parser.set_defaults(
     naive_noise=False,
     alpha=0.1,
     beta=0.2,
-    epsilon=1.0
+    sigma=0.01,
     )
 args = parser.parse_args()
 
@@ -87,7 +87,7 @@ def main():
     ntu_loaders = NTUDataLoaders(args.dataset, args.case, seg=args.seg, tag=args.tag, \
                                     maskidx=args.mask, naive_noise=args.naive_noise==1, \
                                     smart_noise=args.smart_noise==1, smart_masking=args.smart_masking==1, \
-                                    alpha=args.alpha, beta=args.beta, epsilon=args.epsilon)
+                                    alpha=args.alpha, beta=args.beta, sigma=args.sigma)
     train_loader = ntu_loaders.get_train_loader(args.batch_size, args.workers)
     val_loader = ntu_loaders.get_val_loader(args.batch_size, args.workers)
     train_size = ntu_loaders.get_train_size()
