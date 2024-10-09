@@ -41,16 +41,20 @@ parser.set_defaults(
     load_dir=None,
     smart_noise=False,
     smart_masking=False,
+    group_noise=False,
     naive_noise=False,
-    alpha=0.1,
+    alpha=0.9,
     beta=0.2,
     sigma=0.01,
+    total_epsilon=1.0,
     )
 args = parser.parse_args()
 
-assert args.smart_masking == 0 or args.smart_noise == 0, "Smart masking and smart noise cannot be applied at the same time"
+exclusives = [args.smart_masking, args.smart_noise, args.group_noise, args.naive_noise]
+assert sum(exclusives) <= 1, "Only one of smart masking, smart noise, group noise, or naive noise can be applied"
+assert sum(exclusives) == 0 or 'maskidx' not in args, "Masking cannot be applied with smart masking, smart noise, group noise, or naive noise"
 assert args.smart_masking == 0 or 'maskidx' not in args, "Smart masking cannot be applied with masking"
-assert args.smart_noise == 0 or args.naive_noise == 0, "Smart noise and naive noise cannot be applied at the same time"
+assert args.smart_noise == 0 or args.alpha > 0, "Alpha must be greater than 0 for smart noise"
 assert args.dataset in ['NTU', 'NTU120', 'ETRI'], "Dataset not found"
 assert args.dataset == 'ETRI' or args.tag in ['ar', 'ri'], "ETRI dataset only supports ar and ri tags"
 
@@ -87,7 +91,8 @@ def main():
     ntu_loaders = NTUDataLoaders(args.dataset, args.case, seg=args.seg, tag=args.tag, \
                                     maskidx=args.mask, naive_noise=args.naive_noise==1, \
                                     smart_noise=args.smart_noise==1, smart_masking=args.smart_masking==1, \
-                                    alpha=args.alpha, beta=args.beta, sigma=args.sigma)
+                                    group_noise=args.group_noise==1, alpha=args.alpha, beta=args.beta, \
+                                    sigma=args.sigma, total_epsilon=args.total_epsilon)
     train_loader = ntu_loaders.get_train_loader(args.batch_size, args.workers)
     val_loader = ntu_loaders.get_val_loader(args.batch_size, args.workers)
     train_size = ntu_loaders.get_train_size()
