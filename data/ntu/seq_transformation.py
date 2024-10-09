@@ -138,14 +138,6 @@ def one_hot_vector(labels):
 
     return labels_vector
 
-def filter_data(skes_joints, labels, performers, cameras, frames_cnt):
-    # Keep only the data with labels <= 49
-    filtered_indices = [i for i, l in enumerate(labels) if l <= 49]
-    return (skes_joints[filtered_indices], labels[filtered_indices],
-            performers[filtered_indices], cameras[filtered_indices],
-            frames_cnt[filtered_indices])
-
-
 def split_train_val(train_indices, method='sklearn', ratio=0.05):
     """
     Get validation set by splitting data randomly from training set with two methods.
@@ -239,11 +231,6 @@ if __name__ == '__main__':
     skes_joints = seq_translation(skes_joints)
 
     skes_joints = align_frames(skes_joints, frames_cnt)  # aligned to the same frame length
-    
-    # filter to remove 2 actor actions
-    skes_joints, label, performer, camera, frames_cnt = filter_data(
-        skes_joints, label, performer, camera, frames_cnt
-    )
 
     evaluations = ['CS', 'CV']
     for evaluation in evaluations:
