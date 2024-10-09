@@ -1,23 +1,13 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 from torch.utils.data import Dataset, DataLoader
-import os
 import torch
 import numpy as np
 import h5py
-import random
 import os.path as osp
-import sys
-from six.moves import xrange
 import math
-import scipy.misc
-if sys.version_info[0] == 2:
-    import cPickle as pickle
-else:
-    import pickle
-from sklearn.model_selection import train_test_split
-import matplotlib.pyplot as plt
 from explanation import Explanation
+import pickle
 
 sensitivity = {
     'NTU': [8, 3, 8, 8, 3, 8, 8, 4, 8, 8, 4, 8, 8, 3, 8, 8, 4, 8, 7, 4, 8, 7, 5, 8, 8, 3, 8, 7, 3, 8, 7, 4, 8, 8, 4, 8, 8, 3, 8, 8, 4, 8, 8, 4, 8, 8, 4, 8, 8, 3, 8, 8, 4, 8, 8, 4, 8, 8, 4, 8, 8, 3, 8, 7, 5, 8, 7, 5, 8, 8, 4, 8, 8, 4, 8],
@@ -38,7 +28,7 @@ class NTUDataset(Dataset):
         return [self.x[index], int(self.y[index])]
 
 class NTUDataLoaders(object):
-    def __init__(self, dataset ='NTU', case = 0, aug = 1, seg = 30, tag='ar', maskidx=[], smart_noise=False, smart_masking=False, naive_noise=False, alpha=0.1, beta=0.2, sigma=1):
+    def __init__(self, dataset ='NTU', case = 0, aug = 1, seg = 30, tag='ar', maskidx=[], smart_noise=False, smart_masking=False, group_noise=False, naive_noise=False, alpha=0.1, beta=0.2, sigma=1, total_epsilon=1):
         self.dataset = dataset
         self.case = case
         self.tag = tag
@@ -47,11 +37,13 @@ class NTUDataLoaders(object):
         self.smart_noise = smart_noise
         self.smart_masking = smart_masking
         self.naive_noise = naive_noise
-        if self.smart_masking or self.smart_noise:
+        self.group_noise = group_noise
+        if self.smart_masking or self.smart_noise or self.group_noise:
             self.explanation = Explanation(dataset)
         self.alpha = alpha
         self.beta = beta
         self.sigma = sigma
+        self.total_epsilon = total_epsilon
         self.create_datasets()
         self.train_set = NTUDataset(self.train_X, self.train_Y)
         self.val_set = NTUDataset(self.val_X, self.val_Y)
@@ -242,25 +234,64 @@ class NTUDataLoaders(object):
 
                 seq[:,maskidx] = 0
 
-            # smart noise
-            if self.smart_noise:
+            # group noise
+            if self.group_noise:
                 importance = self.explanation.importance_score(seq, y[idx], is_action=self.tag == 'ar', alpha=self.alpha)
                 phi = np.array([importance[joint] for joint in range(25)])
-                
+               
                 # Expand to 75
                 phi = np.repeat(phi, 3)
 
                 # Calculate gamma
-                gamma = np.exp(phi)#-phi
-                
+                gamma = np.exp(-phi) # or  gamma = 1/phi
+
+                # Group 1 top beta% of joints
+                sorted_joints = sorted(importance.items(), key=lambda item: item[1], reverse=True)
+
+                # Get the top beta% of joints
+                top_joints = sorted_joints[:max(1, math.floor(len(sorted_joints) * self.beta))]
+                joints = [joint for joint, score in top_joints]
+
+                maskidx = []
+                for i in joints:
+                    maskidx.append(i*3)
+                    maskidx.append(i*3+1)
+                    maskidx.append(i*3+2)
+                    maskidx.append(i*3+75)
+                    maskidx.append(i*3+1+75)
+                    maskidx.append(i*3+2+75)
+
+                # use epsilon
+                epsilon_s = (gamma/(len(maskidx)*gamma + (75-len(maskidx)))) * self.total_epsilon
+                epsilon_n = (1/(len(maskidx)*gamma + (75-len(maskidx)))) * self.total_epsilon
+
+                # tile epsilon
+                epsilon_s = np.tile(epsilon_s, 2)
+                epsilon_n = np.tile(epsilon_n, 2)
+
+                for i in range(150):
+                    seq[:,i] = seq[:,i] + np.random.normal(0, self.sigma/ (epsilon_s[i] if i in maskidx else epsilon_n[i]) * self.total_epsilon, seq[:, i].shape)
+            
+            # smart noise
+            if self.smart_noise:
+                importance = self.explanation.importance_score(seq, y[idx], is_action=self.tag == 'ar', alpha=self.alpha)
+                phi = np.array([importance[joint] for joint in range(25)])
+               
+                # Expand to 75
+                phi = np.repeat(phi, 3)
+
+                # Calculate gamma
+                gamma = np.exp(-phi) # or  gamma = 1/phi
+               
                 # Calculate scale
-                scale_gamma = (gamma / np.sum(gamma)) * self.sigma * 75
-                scale_phi = (phi / np.sum(phi)) * self.sigma * 75
+                scale_gamma = 1 / (gamma / np.sum(gamma)) * self.sigma / 75
+
+                # Tile scale
+                scale_gamma = np.tile(scale_gamma, 2)
 
                 # Add noise
-                for i in range(75):
-                    # scale = sensitivity[self.dataset][i] / sigmas[i].item()
-                    seq[:, i] = seq[:, i] + np.random.normal(0, scale_phi[i].item(), seq[:, i].shape)
+                for i in range(150):
+                    seq[:, i] = seq[:, i] + np.random.normal(0, scale_gamma[i].item(), seq[:, i].shape)
 
 
             zero_row = []

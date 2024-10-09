@@ -1,0 +1,27 @@
+python  main.py --network SGN --train 1 --case 1 --dataset NTU --tag ar --noise-variance 0.001
+python  main.py --network SGN --train 1 --case 1 --dataset NTU --tag ar --noise-variance 0.01
+python  main.py --network SGN --train 1 --case 1 --dataset NTU --tag ar --noise-variance 0.1
+python  main.py --network SGN --train 1 --case 1 --dataset NTU --tag ar --noise-variance 1
+python  main.py --network SGN --train 1 --case 1 --dataset NTU --tag ar --noise-variance 3
+python  main.py --network SGN --train 1 --case 1 --dataset NTU --tag ar --noise-variance 5
+python  main.py --network SGN --train 1 --case 1 --dataset NTU --tag ar --noise-variance 10
+python  main.py --network SGN --train 1 --case 1 --dataset NTU --tag ar --noise-variance 40
+
+
+
+
+python main.py --network SGN --train 0 --case 1 --dataset NTU --tag ar --noise-variance 0.1 --load-dir results/NTUar
+Test: accuracy 93.794, time: 57.46s
+
+python main.py --network SGN --train 0 --case 0 --dataset ETRI --tag ar --noise-variance 0.1 --load-dir results/ETRIar 
+Test: accuracy 87.697, time: 342.92s
+
+python main.py --network SGN --train 0 --case 0 --dataset ETRI --tag ar --load-dir results/ETRIar --mask 0 1 2 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 22 24
+Test: accuracy 6.654, time: 356.40s
+
+
+python main.py --network SGN --train 0 --case 1 --dataset NTU --tag ar --load-dir results/NTUar --smart-noise 1 --epsilon 1000
+
+python main.py --network SGN --train 0 --case 1 --dataset NTU --tag ar --load-dir results/NTUar --smart-noise 1 --alpha 0.9 --sigma 0.001
+
+python main.py --network SGN --train 0 --case 1 --dataset NTU --tag ar --load-dir results/NTUar --group-noise 1
