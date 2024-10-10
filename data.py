@@ -28,7 +28,7 @@ class NTUDataset(Dataset):
         return [self.x[index], int(self.y[index])]
 
 class NTUDataLoaders(object):
-    def __init__(self, dataset ='NTU', case = 0, aug = 1, seg = 30, tag='ar', maskidx=[], smart_noise=False, smart_masking=False, group_noise=False, naive_noise=False, alpha=0.1, beta=0.2, sigma=1, total_epsilon=1):
+    def __init__(self, dataset ='NTU', case = 0, aug = 1, seg = 30, tag='ar', maskidx=[], smart_noise=False, smart_masking=False, group_noise=False, naive_noise=False, alpha=0.1, beta=0.2, sigma=0.001, total_epsilon=1):
         self.dataset = dataset
         self.case = case
         self.tag = tag
@@ -139,6 +139,7 @@ class NTUDataLoaders(object):
             # Add noise with same variance to all joints
             self.train_X = self.train_X + np.random.normal(0, self.sigma, self.train_X.shape)
             self.val_X = self.val_X + np.random.normal(0, self.sigma, self.val_X.shape)
+            self.test_X = self.test_X + np.random.normal(0, self.sigma, self.test_X.shape)
 
         # Ensure data is float tensor
         self.train_X = self.train_X.astype(np.float32)
@@ -270,6 +271,8 @@ class NTUDataLoaders(object):
                 epsilon_n = np.tile(epsilon_n, 2)
 
                 for i in range(150):
+                    # Skip zero padded frames
+                    if (seq[:, i] == np.zeros(seq[:, i].shape)).all(): continue
                     seq[:,i] = seq[:,i] + np.random.normal(0, self.sigma/ (epsilon_s[i] if i in maskidx else epsilon_n[i]) * self.total_epsilon, seq[:, i].shape)
             
             # smart noise
@@ -291,6 +294,8 @@ class NTUDataLoaders(object):
 
                 # Add noise
                 for i in range(150):
+                    # Skip zero padded frames
+                    if (seq[:, i] == np.zeros(seq[:, i].shape)).all(): continue
                     seq[:, i] = seq[:, i] + np.random.normal(0, scale_gamma[i].item(), seq[:, i].shape)
 
 
