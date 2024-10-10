@@ -42,3 +42,13 @@ Smart Masking:
 
 Smart Noise:
 --smart-noise 1
+
+python main.py --network SGN --train 0 --case 1 --dataset NTU --tag ar --load-dir results/NTUar --smart-masking 1 --alpha 0.9 --beta 0.2
+
+python main.py --network SGN --train 0 --case 1 --dataset NTU --tag ar --load-dir results/NTUar --smart-noise 1 --epsilon 1000
+
+python main.py --network SGN --train 0 --case 1 --dataset NTU --tag ar --load-dir results/NTUar --smart-noise 1 --alpha 0.9 --sigma 0.001
+
+python main.py --network SGN --train 0 --case 1 --dataset NTU --tag ar --load-dir results/NTUar --group-noise 1
+
+python main.py --network SGN --train 0 --case 1 --dataset NTU --tag ar --load-dir results/NTUar --naive-noise 1 --sigma 0.001

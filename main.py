@@ -64,7 +64,6 @@ def main():
     model = SGN(args.num_classes, args.dataset, args.seg, args)
 
     total = get_n_params(model)
-    print(model)
     print('The number of parameters: ', total)
     print('The modes is:', args.network)
 
