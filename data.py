@@ -206,7 +206,7 @@ class NTUDataLoaders(object):
                     # Skip zero padded frames
                     if np.all(seq[:, i] == 0): continue
                     zero_start = np.argmax(seq[:, i])
-                    seq[zero_start, i] = seq[zero_start, i] + np.random.normal(0, self.sigma, seq[zero_start, i].shape)
+                    seq[:zero_start, i] = seq[:zero_start, i] + np.random.normal(0, self.sigma, seq[:zero_start, i].shape)
 
             # smart masking
             if self.smart_masking:
@@ -269,7 +269,7 @@ class NTUDataLoaders(object):
                     # Skip zero padded frames
                     if np.all(seq[:, i] == 0): continue
                     zero_start = np.argmax(seq[:, i])
-                    seq[zero_start, i] = seq[zero_start, i] + np.random.normal(0, self.sigma/75/(epsilon_s[i] if i in maskidx else epsilon_n[i]), seq[zero_start, i].shape)
+                    seq[:zero_start, i] = seq[:zero_start, i] + np.random.normal(0, self.sigma/75/(epsilon_s[i] if i in maskidx else epsilon_n[i]), seq[:zero_start, i].shape)
             
             # smart noise
             if self.smart_noise:
@@ -293,7 +293,7 @@ class NTUDataLoaders(object):
                     # Skip zero padded frames
                     if np.all(seq[:, i] == 0): continue
                     zero_start = np.argmax(seq[:, i])
-                    seq[zero_start, i] = seq[zero_start, i] + np.random.normal(0, scale_gamma[i].item(), seq[zero_start, i].shape)
+                    seq[:zero_start, i] = seq[:zero_start, i] + np.random.normal(0, scale_gamma[i].item(), seq[:zero_start, i].shape)
 
             zero_row = []
             for i in range(len(seq)):
