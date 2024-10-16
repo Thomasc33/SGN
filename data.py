@@ -134,13 +134,6 @@ class NTUDataLoaders(object):
         self.val_X = self.test_X
         self.val_Y = self.test_Y
 
-        # Add Noise
-        if self.naive_noise:
-            # Add noise with same variance to all joints
-            self.train_X = self.train_X + np.random.normal(0, self.sigma, self.train_X.shape)
-            self.val_X = self.val_X + np.random.normal(0, self.sigma, self.val_X.shape)
-            self.test_X = self.test_X + np.random.normal(0, self.sigma, self.test_X.shape)
-
         # Ensure data is float tensor
         self.train_X = self.train_X.astype(np.float32)
         self.val_X = self.val_X.astype(np.float32)
@@ -212,6 +205,14 @@ class NTUDataLoaders(object):
             # masking logic
             if len(self.maskidx) > 0:
                 seq[:,self.maskidx] = 0
+
+            # naive noise
+            if self.naive_noise:
+                # Add noise with same variance to all joints
+                for i in range(150):
+                    # Skip zero padded frames
+                    if (seq[:, i] == np.zeros(seq[:, i].shape)).all(): continue
+                    seq[:,i] = seq[:,i] + np.random.normal(0, self.sigma, seq[:, i].shape)
 
             # smart masking
             if self.smart_masking:
