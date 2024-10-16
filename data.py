@@ -274,7 +274,7 @@ class NTUDataLoaders(object):
                 for i in range(150):
                     # Skip zero padded frames
                     if (seq[:, i] == np.zeros(seq[:, i].shape)).all(): continue
-                    seq[:,i] = seq[:,i] + np.random.normal(0, self.sigma/ (epsilon_s[i] if i in maskidx else epsilon_n[i]) * self.total_epsilon, seq[:, i].shape)
+                    seq[:,i] = seq[:,i] + np.random.normal(0, self.sigma/75/(epsilon_s[i] if i in maskidx else epsilon_n[i]), seq[:, i].shape)
             
             # smart noise
             if self.smart_noise:
