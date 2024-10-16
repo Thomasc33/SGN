@@ -68,7 +68,6 @@ def main():
     print('The modes is:', args.network)
 
     if torch.cuda.is_available():
-        print('It is using GPU!')
         model = model.cuda()
 
     criterion = LabelSmoothingLoss(args.num_classes, smoothing=0.1).cuda()
@@ -99,7 +98,8 @@ def main():
 
     test_loader = ntu_loaders.get_test_loader(32, args.workers)
 
-    print('Train on %d samples, validate on %d samples' % (train_size, val_size))
+    if args.train: print(f'Training on {train_size} samples')
+    print(f'Testing on {val_size} samples')
 
     best_epoch = 0
     if args.load_dir:
