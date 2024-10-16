@@ -9,13 +9,6 @@ import math
 from explanation import Explanation
 import pickle
 
-sensitivity = {
-    'NTU': [8, 3, 8, 8, 3, 8, 8, 4, 8, 8, 4, 8, 8, 3, 8, 8, 4, 8, 7, 4, 8, 7, 5, 8, 8, 3, 8, 7, 3, 8, 7, 4, 8, 8, 4, 8, 8, 3, 8, 8, 4, 8, 8, 4, 8, 8, 4, 8, 8, 3, 8, 8, 4, 8, 8, 4, 8, 8, 4, 8, 8, 3, 8, 7, 5, 8, 7, 5, 8, 8, 4, 8, 8, 4, 8],
-    'NTU120': [],
-    'ETRI': []
-}
-
-
 class NTUDataset(Dataset):
     def __init__(self, x, y):
         self.x = x
