@@ -144,7 +144,7 @@ class NTUDataLoaders(object):
             x = list(x)
 
         x, y = self.Tolist_fix(x, y, train=1)
-        lens = np.array([x_.shape[0] for x_ in x], dtype=np.int)
+        lens = np.array([x_.shape[0] for x_ in x], dtype=int)
         idx = lens.argsort()[::-1]  # sort sequence by valid length in descending order
         y = np.array(y)[idx]
         x = torch.stack([torch.from_numpy(x[i]) for i in idx], 0)
@@ -233,13 +233,17 @@ class NTUDataLoaders(object):
             # group noise
             if self.group_noise:
                 importance = self.explanation.importance_score(seq, y[idx], is_action=self.tag == 'ar', alpha=self.alpha)
+                
+                gamma = np.repeat(np.array(0.03), 75)
+                
                 phi = np.array([importance[joint] for joint in range(25)])
                
-                # Expand to 75
+                # # Expand to 75
                 phi = np.repeat(phi, 3)
 
-                # Calculate gamma
-                gamma = np.exp(-phi) # or  gamma = 1/phi
+                # # Calculate gamma
+                # gamma = np.exp(-phi) # or  gamma = 1/phi
+                # gamma = np.repeat(np.array(np.exp(1/phi)), 75)
 
                 # Group 1 top beta% of joints
                 sorted_joints = sorted(importance.items(), key=lambda item: item[1], reverse=True)
@@ -258,8 +262,10 @@ class NTUDataLoaders(object):
                     maskidx.append(i*3+2+75)
 
                 # use epsilon
-                epsilon_s = (gamma/(len(maskidx)*gamma + (75-len(maskidx)))) * self.total_epsilon
-                epsilon_n = (1/(len(maskidx)*gamma + (75-len(maskidx)))) * self.total_epsilon
+                # epsilon_s = (gamma/(len(maskidx)*gamma + (75-len(maskidx)))) 
+                # epsilon_n = (1/(len(maskidx)*gamma + (75-len(maskidx))))
+                epsilon_s = (gamma/(3*len(joints)*gamma + (75-3*len(joints)))) 
+                epsilon_n = (1/(3*len(joints)*gamma + (75-3*len(joints))))
 
                 # tile epsilon
                 epsilon_s = np.tile(epsilon_s, 2)
@@ -272,16 +278,29 @@ class NTUDataLoaders(object):
                     seq[:zero_start, i] = seq[:zero_start, i] + np.random.normal(0, self.sigma/75/(epsilon_s[i] if i in maskidx else epsilon_n[i]), seq[:zero_start, i].shape)
             
             # smart noise
+# smart noise
             if self.smart_noise:
                 importance = self.explanation.importance_score(seq, y[idx], is_action=self.tag == 'ar', alpha=self.alpha)
-                phi = np.array([importance[joint] for joint in range(25)])
-               
-                # Expand to 75
-                phi = np.repeat(phi, 3)
+                
+                # sort all joints
+                # sorted_joints = sorted(importance.items(), key=lambda item: item[1], reverse=True)
+                # joints = [joint for joint, score in sorted_joints]
 
-                # Calculate gamma
-                gamma = np.exp(-phi) # or  gamma = 1/phi
-               
+
+                # create staired gamma
+                # stairs = np.arange(0.04, 1.04, 0.04)
+                #stairs = np.arange(0.01, 1.01, 0.04)
+                #gamma = np.zeros(25)
+                #gamma[joints] = stairs 
+                #gamma = np.repeat(gamma, 3)
+                phi = np.array([importance[joint] for joint in range(25)])
+                phi = np.repeat(phi, 3)
+                gamma = 1 / phi
+                if np.max(gamma) - np.min(gamma) == 0:
+                    gamma = np.ones(gamma.shape)
+                else:
+                    gamma = (gamma - np.min(gamma)) / (np.max(gamma) - np.min(gamma)) +0.01
+
                 # Calculate scale
                 scale_gamma = 1 / (gamma / np.sum(gamma)) * self.sigma / 75
 
@@ -294,6 +313,7 @@ class NTUDataLoaders(object):
                     if np.all(seq[:, i] == 0): continue
                     zero_start = np.argmax(seq[:, i])
                     seq[:zero_start, i] = seq[:zero_start, i] + np.random.normal(0, scale_gamma[i].item(), seq[:zero_start, i].shape)
+
 
             zero_row = []
             for i in range(len(seq)):
