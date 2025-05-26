@@ -19,9 +19,21 @@ Test: accuracy 87.697, time: 342.92s
 python main.py --network SGN --train 0 --case 0 --dataset ETRI --tag ar --load-dir results/ETRIar --mask 0 1 2 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 22 24
 Test: accuracy 6.654, time: 356.40s
 
+python main.py --network SGN --train 0 --case 1 --dataset NTU --tag ar --load-dir results/NTUar --smart-masking 1 --alpha 0.9 --beta 0.2
 
 python main.py --network SGN --train 0 --case 1 --dataset NTU --tag ar --load-dir results/NTUar --smart-noise 1 --epsilon 1000
 
 python main.py --network SGN --train 0 --case 1 --dataset NTU --tag ar --load-dir results/NTUar --smart-noise 1 --alpha 0.9 --sigma 0.001
 
 python main.py --network SGN --train 0 --case 1 --dataset NTU --tag ar --load-dir results/NTUar --group-noise 1
+
+python main.py --network SGN --train 0 --case 1 --dataset NTU --tag ar --load-dir results/NTUar --naive-noise 1 --sigma 0.001
+
+
+
+# python main.py --network SGN --train 0 --case 1 --dataset NTU120 --tag ar --load-dir results/NTU120ar
+python main.py --network SGN --train 0 --case 1 --dataset NTU120 --tag ri --load-dir results/NTU120ri
+# python main.py --network SGN --train 0 --case 1 --dataset NTU120 --tag gc --load-dir results/NTU120gc
+
+python main.py --network SGN --train 0 --case 1 --dataset ETRI --tag ar --load-dir results/ETRIar
+python main.py --network SGN --train 0 --case 1 --dataset ETRI --tag ri --load-dir results/ETRIri

@@ -56,7 +56,7 @@ assert sum(exclusives) == 0 or 'maskidx' not in args, "Masking cannot be applied
 assert args.smart_masking == 0 or 'maskidx' not in args, "Smart masking cannot be applied with masking"
 assert args.smart_noise == 0 or args.alpha > 0, "Alpha must be greater than 0 for smart noise"
 assert args.dataset in ['NTU', 'NTU120', 'ETRI'], "Dataset not found"
-assert args.dataset == 'ETRI' or args.tag in ['ar', 'ri'], "ETRI dataset only supports ar and ri tags"
+# assert args.dataset == 'ETRI' and args.tag in ['ar', 'ri'], "ETRI dataset only supports ar and ri tags"
 
 def main():
 
@@ -225,35 +225,70 @@ def validate(val_loader, model, criterion):
 
 
 def test(test_loader, model, checkpoint, lable_path, pred_path):
-    acces = AverageMeter()
-    # load learnt model that obtained best performance on validation set
-    model.load_state_dict(torch.load(checkpoint, weights_only=True)['state_dict'])
+    """Test loop that prints final top-1 accuracy. Also prints/stores top-5 
+       accuracy if tag is ar or ri.
+    """
+    top1_meter = AverageMeter()
+    top5_meter = AverageMeter() if args.tag in ['ar', 'ri'] else None
+
+    # Load best model
+    model.load_state_dict(torch.load(checkpoint)['state_dict'])
     model.eval()
 
-    label_output = list()
-    pred_output = list()
+    label_output = []
+    pred_output = []
 
     t_start = time.time()
     for i, (inputs, target) in enumerate(test_loader):
         with torch.no_grad():
-            output = model(inputs.cuda())
-            output = output.view((-1, inputs.size(0)//target.size(0), output.size(1)))
-            output = output.mean(1)
+            outputs = model(inputs.cuda())
+            # For multi-crop or multiple segment inference, if used
+            outputs = outputs.view((-1, inputs.size(0)//target.size(0), outputs.size(1)))
+            outputs = outputs.mean(1)
 
-        label_output.append(target.cpu().numpy())
-        pred_output.append(output.cpu().numpy())
+        label_output.append(target.numpy())
+        pred_output.append(outputs.cpu().numpy())
 
-        acc = accuracy(output.data, target.cuda())
-        acces.update(acc[0], inputs.size(0))
+        # Compute top-1 & top-5
+        acc1, acc5 = accuracy_topk(outputs, target.cuda(), topk=(1, 5))
+        top1_meter.update(acc1.item(), inputs.size(0))
+        if top5_meter is not None:
+            top5_meter.update(acc5.item(), inputs.size(0))
 
-
+    # Write label & pred to disk
     label_output = np.concatenate(label_output, axis=0)
     np.savetxt(lable_path, label_output, fmt='%d')
     pred_output = np.concatenate(pred_output, axis=0)
     np.savetxt(pred_path, pred_output, fmt='%f')
 
-    print('Test: accuracy {:.3f}, time: {:.2f}s'
-          .format(acces.avg, time.time() - t_start))
+    elapsed = time.time() - t_start
+
+    if top5_meter is not None:
+        print('Test: top1 accuracy = {:.3f}, top5 accuracy = {:.3f}, time = {:.2f}s'
+              .format(top1_meter.avg, top5_meter.avg, elapsed))
+    else:
+        print('Test: accuracy = {:.3f}, time = {:.2f}s'
+              .format(top1_meter.avg, elapsed))
+
+
+def accuracy_topk(output, target, topk=(1,)):
+    """Compute top-k accuracies. Returns a tuple of 
+       accuracies in the same order as topk."""
+    maxk = max(topk)
+    batch_size = target.size(0)
+
+    # Get indices of top-k predictions
+    _, pred = output.topk(maxk, dim=1, largest=True, sorted=True)  # shape: [batch_size, maxk]
+    pred = pred.t()  # shape: [maxk, batch_size]
+    correct = pred.eq(target.view(1, -1).expand_as(pred))
+
+    res = []
+    for k in topk:
+        # Flatten first k rows of correct into a single vector
+        # and count how many are true
+        correct_k = correct[:k].reshape(-1).float().sum(0, keepdim=True)
+        res.append(correct_k.mul_(100.0 / batch_size))
+    return tuple(res)
 
 
 def accuracy(output, target):
