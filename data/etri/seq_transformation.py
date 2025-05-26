@@ -210,33 +210,32 @@ def get_indices(performer, camera, evaluation='CS'):
         # Get indices of test data
         for idx in test_ids:
             temp = np.where(performer == idx)[0]  # 0-based index
-            test_indices = np.hstack((test_indices, temp)).astype(np.int)
+            test_indices = np.hstack((test_indices, temp)).astype(np.int32)
 
         # Get indices of training data
         for train_id in train_ids:
             temp = np.where(performer == train_id)[0]  # 0-based index
-            train_indices = np.hstack((train_indices, temp)).astype(np.int)
-    else:  # Cross View (Camera IDs)
-        train_ids = [2,3,5,7]
-        test_ids = [1,4,6,8]
+            train_indices = np.hstack((train_indices, temp)).astype(np.int32)
+    else:  # Cross View
+        train_ids = [2, 3, 5, 7]
+        test_ids = [1, 4, 6, 8]
+
         # Get indices of test data
-        temp = np.where(camera == test_ids)[0]  # 0-based index
-        test_indices = np.hstack((test_indices, temp)).astype(np.int)
+        test_indices = np.where(np.isin(camera, test_ids))[0].astype(np.int32)
 
         # Get indices of training data
-        for train_id in train_ids:
-            temp = np.where(camera == train_id)[0]  # 0-based index
-            train_indices = np.hstack((train_indices, temp)).astype(np.int)
+        train_indices = np.where(np.isin(camera, train_ids))[0].astype(np.int32)
+
 
     return train_indices, test_indices
 
 
 if __name__ == '__main__':
-    camera = np.loadtxt(camera_file, dtype=np.int)  # camera id: 1, 2, 3
-    performer = np.loadtxt(performer_file, dtype=np.int)  # subject id: 1~40
-    label = np.loadtxt(label_file, dtype=np.int) - 1  # action label: 0~59
+    camera = np.loadtxt(camera_file, dtype=np.int32)  # camera id: 1, 2, 3
+    performer = np.loadtxt(performer_file, dtype=np.int32)  # subject id: 1~40
+    label = np.loadtxt(performer_file, dtype=np.int32) - 1  # action label: 0~59
 
-    frames_cnt = np.loadtxt(frames_file, dtype=np.int)  # frames_cnt
+    frames_cnt = np.loadtxt(frames_file, dtype=np.int32)  # frames_cnt
     skes_name = np.loadtxt(skes_name_file, dtype=np.string_)
 
     with open(raw_skes_joints_pkl, 'rb') as fr:
@@ -250,6 +249,11 @@ if __name__ == '__main__':
     skes_joints, label, performer, camera, frames_cnt = filter_data(
         skes_joints, label, performer, camera, frames_cnt
     )
+
+    # Save data to pkl as dictionary with key as skes_name and value as skes_joints
+    # data_dict = dict(zip(skes_name, skes_joints))
+    # with open(osp.join(save_path, 'ETRI.pkl'), 'wb') as fw:
+    #     pickle.dump(data_dict, fw)
 
     evaluations = ['CS', 'CV']
     for evaluation in evaluations:
