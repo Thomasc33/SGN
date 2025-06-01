@@ -41,10 +41,13 @@ class Explanation():
 
         args = SimpleNamespace(batch_size=32, train=0)
 
-        self.sgn_ar = SGN(self.num_classes, None, 20, args, 0).cuda()
-        self.sgn_priv = SGN(self.num_actors, None, 20, args, 0).cuda()
-        self.sgn_ar.load_state_dict(torch.load(datasets[dataset]['ar_model'], weights_only=True)['state_dict'], strict=False)
-        self.sgn_priv.load_state_dict(torch.load(datasets[dataset]['ri_model'], weights_only=True)['state_dict'], strict=False)
+        # Use CUDA if available, otherwise use CPU
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+        self.sgn_ar = SGN(self.num_classes, None, 20, args, 0).to(self.device)
+        self.sgn_priv = SGN(self.num_actors, None, 20, args, 0).to(self.device)
+        self.sgn_ar.load_state_dict(torch.load(datasets[dataset]['ar_model'], map_location=self.device)['state_dict'], strict=False)
+        self.sgn_priv.load_state_dict(torch.load(datasets[dataset]['ri_model'], map_location=self.device)['state_dict'], strict=False)
         self.sgn_ar.eval()
         self.sgn_priv.eval()
 
@@ -63,7 +66,7 @@ class Explanation():
 
     def importance_score(self, sample, label, is_action=False, alpha=0.1):
         reshaped_skeleton = self.reshape_skeleton(sample)
-        input_tensor = torch.tensor(reshaped_skeleton, dtype=torch.float32).unsqueeze(0).cuda()
+        input_tensor = torch.tensor(reshaped_skeleton, dtype=torch.float32).unsqueeze(0).to(self.device)
         
         # Compute attributions for both models
         ar_attribution = self.ig_ar.attribute(input_tensor, target=label if is_action else 0).abs()
@@ -107,6 +110,50 @@ class Explanation():
 
         return importance
 
+    def attribution_scores(self, sample, label, is_action=False):
+        """
+        Get separate privacy and utility attribution scores for each joint.
+
+        Returns:
+            privacy_scores: dict with joint indices as keys and privacy attribution scores as values
+            utility_scores: dict with joint indices as keys and utility attribution scores as values
+        """
+        reshaped_skeleton = self.reshape_skeleton(sample)
+        input_tensor = torch.tensor(reshaped_skeleton, dtype=torch.float32).unsqueeze(0).to(self.device)
+
+        # Compute attributions for both models
+        ar_attribution = self.ig_ar.attribute(input_tensor, target=label if is_action else 0).abs()
+        ri_attribution = self.ig_ri.attribute(input_tensor, target=0 if is_action else label).abs()
+
+        joint_attributions_ar = {}
+        joint_attributions_ri = {}
+
+        for joint in range(self.joints):
+            joint_indices = [joint * 3 + c for c in range(3)]
+
+            # Get attributions for these indices across all frames
+            joint_attr_ar = ar_attribution[0, :, joint_indices]  # Shape: (20, 3)
+            joint_attr_ri = ri_attribution[0, :, joint_indices]
+
+            # Sum over frames and coords
+            joint_attributions_ar[joint] = joint_attr_ar.sum().item()
+            joint_attributions_ri[joint] = joint_attr_ri.sum().item()
+
+        # Normalize attributions to [0, 1] for each model separately
+        total_ar = sum(joint_attributions_ar.values())
+        total_ri = sum(joint_attributions_ri.values())
+
+        if total_ar > 0:
+            normalized_ar = {joint: attr / total_ar for joint, attr in joint_attributions_ar.items()}
+        else:
+            normalized_ar = {joint: 0.0 for joint in range(self.joints)}
+
+        if total_ri > 0:
+            normalized_ri = {joint: attr / total_ri for joint, attr in joint_attributions_ri.items()}
+        else:
+            normalized_ri = {joint: 0.0 for joint in range(self.joints)}
+
+        return normalized_ri, normalized_ar
 
     def reshape_skeleton(self, skeleton):
         """
