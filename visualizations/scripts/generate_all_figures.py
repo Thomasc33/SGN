@@ -27,6 +27,7 @@ def create_directory_structure():
     directories = [
         'figures/teaser',
         'figures/skeleton_sensitivity',
+        'figures/skeleton_attribution',
         'figures/pipeline',
         'figures/process_diagram',
         'figures/heatmap',
@@ -200,6 +201,7 @@ def main():
     figure_generators = [
         ('Teaser Figure', generate_teaser_figure, 'figures/teaser'),
         ('Skeleton Sensitivity', generate_skeleton_sensitivity_figure, 'figures/skeleton_sensitivity'),
+        ('Skeleton Attribution', generate_skeleton_attribution_figure, 'figures/skeleton_attribution'),
         ('Pipeline Diagram', generate_pipeline_figure, 'figures/pipeline'),
         ('Process Diagram', generate_process_diagram, 'figures/process_diagram'),
         ('Heatmap Analysis', generate_heatmap_figure, 'figures/heatmap'),
@@ -217,6 +219,14 @@ def main():
             print(f"✓ {name} generated successfully")
         except Exception as e:
             print(f"✗ Error generating {name}: {e}")
+
+    # Save skeleton file information
+    try:
+        info_output_dir = os.path.join(base_dir, 'figures')
+        save_skeleton_file_info(samples, info_output_dir)
+        print("✓ Skeleton file information saved successfully")
+    except Exception as e:
+        print(f"✗ Error saving skeleton file information: {e}")
 
     # Generate animations
     print("\n" + "="*60)
@@ -251,11 +261,13 @@ def main():
     print("├── figures/")
     print("│   ├── teaser/teaser.png")
     print("│   ├── skeleton_sensitivity/skeleton_sensitivity.png")
+    print("│   ├── skeleton_attribution/skeleton_attribution.png")
     print("│   ├── pipeline/pipeline.png")
     print("│   ├── process_diagram/process_diagram.png")
     print("│   ├── heatmap/heatmap.png")
     print("│   ├── before_after_masking/before_after_masking.png")
-    print("│   └── noise_comparison/noise_comparison.png")
+    print("│   ├── noise_comparison/noise_comparison.png")
+    print("│   └── skeleton_file_info.txt")
     print("└── output/")
     print("    └── gifs/")
     print("        ├── original_animation.gif")

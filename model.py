@@ -13,16 +13,19 @@ class SGN(nn.Module):
         self.seg = seg
         num_joint = 25
         bs = args.batch_size
+        # Store device for later use
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
         if args.train:
             self.spa = self.one_hot(bs, num_joint, self.seg)
-            self.spa = self.spa.permute(0, 3, 2, 1).cuda()
+            self.spa = self.spa.permute(0, 3, 2, 1).to(self.device)
             self.tem = self.one_hot(bs, self.seg, num_joint)
-            self.tem = self.tem.permute(0, 3, 1, 2).cuda()
+            self.tem = self.tem.permute(0, 3, 1, 2).to(self.device)
         else:
             self.spa = self.one_hot(32 * 5, num_joint, self.seg)
-            self.spa = self.spa.permute(0, 3, 2, 1).cuda()
+            self.spa = self.spa.permute(0, 3, 2, 1).to(self.device)
             self.tem = self.one_hot(32 * 5, self.seg, num_joint)
-            self.tem = self.tem.permute(0, 3, 1, 2).cuda()
+            self.tem = self.tem.permute(0, 3, 1, 2).to(self.device)
         self.tem_embed = embed(self.seg, 64*4, norm=False, bias=bias)
         self.spa_embed = embed(num_joint, 64, norm=False, bias=bias)
         self.joint_embed = embed(3, 64, norm=True, bias=bias)
@@ -50,9 +53,9 @@ class SGN(nn.Module):
         bs, step, dim = input.size()
 
         self.spa = self.one_hot(bs, 25, self.seg)
-        self.spa = self.spa.permute(0, 3, 2, 1).cuda()
+        self.spa = self.spa.permute(0, 3, 2, 1).to(self.device)
         self.tem = self.one_hot(bs, self.seg, 25)
-        self.tem = self.tem.permute(0, 3, 1, 2).cuda()
+        self.tem = self.tem.permute(0, 3, 1, 2).to(self.device)
 
         num_joints = dim // 3
         input = input.view((bs, step, num_joints, 3))
@@ -96,9 +99,9 @@ class SGN(nn.Module):
     
     def eval_single(self, x):
         self.spa = self.one_hot(1, 25, self.seg)
-        self.spa = self.spa.permute(0, 3, 2, 1).cuda()
+        self.spa = self.spa.permute(0, 3, 2, 1).to(self.device)
         self.tem = self.one_hot(1, self.seg, 25)
-        self.tem = self.tem.permute(0, 3, 1, 2).cuda()
+        self.tem = self.tem.permute(0, 3, 1, 2).to(self.device)
 
         return self.forward(x)
 

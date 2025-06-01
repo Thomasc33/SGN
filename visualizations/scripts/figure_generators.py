@@ -4,6 +4,7 @@ Figure generation functions for all visualization types
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+import matplotlib.colors as mcolors
 from matplotlib.patches import FancyBboxPatch
 import seaborn as sns
 from skeleton_utils import *
@@ -80,6 +81,73 @@ def generate_skeleton_sensitivity_figure(samples, explanation, out_dir):
                  y=0.98)
     fig.savefig(Path(out_dir) / "skeleton_sensitivity.png",
                 dpi=300, bbox_inches="tight")
+    plt.close(fig)
+
+def generate_skeleton_attribution_figure(samples, explanation, out_dir):
+    """Generate skeleton visualization showing separate privacy and utility attribution scores"""
+    skel, lbl = samples[0]
+    lbl = int(lbl)
+    resh = reshape_skeleton(skel)
+    frm = extract_joints_from_frame(resh[0])
+
+    # Get separate attribution scores
+    privacy_scores, utility_scores = explanation.attribution_scores(resh, lbl, is_action=True)
+
+    # Normalize to [0, 1] for consistent color mapping
+    privacy_vals = np.array(list(privacy_scores.values()))
+    utility_vals = np.array(list(utility_scores.values()))
+
+    privacy_norm = (privacy_vals - privacy_vals.min()) / (privacy_vals.ptp() + 1e-8)
+    utility_norm = (utility_vals - utility_vals.min()) / (utility_vals.ptp() + 1e-8)
+
+    privacy_scores_norm = {j: privacy_norm[j] for j in range(25)}
+    utility_scores_norm = {j: utility_norm[j] for j in range(25)}
+
+    # Create custom yellow-to-blue colormap
+    colors = ['#FEF08A', '#93C5FD']  # Yellow to Blue from process diagram
+    n_bins = 256
+    cmap = mcolors.LinearSegmentedColormap.from_list('yellow_blue', colors, N=n_bins)
+
+    views = [(18, 35), (18, -35), (18, 145), (90, -90)]
+    fig = plt.figure(figsize=(16, 10))
+    fig.patch.set_facecolor("white")
+    gs = fig.add_gridspec(2, 4, wspace=0.05, hspace=0.1)
+
+    # Privacy attribution (top row)
+    for i, view in enumerate(views):
+        ax = fig.add_subplot(gs[0, i], projection="3d")
+        draw_skeleton_3d(ax, frm, importance_scores=privacy_scores_norm,
+                         title="", alpha=1.0, colormap=cmap)
+        ax.view_init(*view)
+        if i == 0:
+            ax.text2D(0.02, 0.95, "Privacy Attribution", transform=ax.transAxes,
+                     fontsize=12, weight='bold', va='top')
+
+    # Utility attribution (bottom row)
+    for i, view in enumerate(views):
+        ax = fig.add_subplot(gs[1, i], projection="3d")
+        draw_skeleton_3d(ax, frm, importance_scores=utility_scores_norm,
+                         title="", alpha=1.0, colormap=cmap)
+        ax.view_init(*view)
+        if i == 0:
+            ax.text2D(0.02, 0.95, "Utility Attribution", transform=ax.transAxes,
+                     fontsize=12, weight='bold', va='top')
+
+    # Add colorbars
+    sm = plt.cm.ScalarMappable(cmap=cmap, norm=mcolors.Normalize(vmin=0, vmax=1))
+
+    # Privacy colorbar
+    cbar1 = fig.colorbar(sm, ax=fig.axes[:4], fraction=0.022, pad=0.02, shrink=0.8)
+    cbar1.set_label("Privacy Attribution Score", rotation=90, color='black')
+    cbar1.ax.tick_params(colors='black')
+
+    # Utility colorbar
+    cbar2 = fig.colorbar(sm, ax=fig.axes[4:8], fraction=0.022, pad=0.02, shrink=0.8)
+    cbar2.set_label("Utility Attribution Score", rotation=90, color='black')
+    cbar2.ax.tick_params(colors='black')
+
+    fig.suptitle("Joint Attribution Analysis: Privacy vs Utility", weight="bold", fontsize=18, y=0.95)
+    fig.savefig(Path(out_dir) / "skeleton_attribution.png", dpi=300, bbox_inches="tight")
     plt.close(fig)
 
 def generate_pipeline_figure(out_dir):
@@ -181,6 +249,11 @@ def generate_heatmap_figure(samples, explanation, output_dir):
         all_importance.append(importance_values)
         sample_labels.append(f'Sample {i+1}')
 
+    # Create custom yellow-to-blue colormap
+    colors = ['#FFFF00', "#0000FF"]  # Yellow to Blue from process diagram
+    n_bins = 256
+    cmap = mcolors.LinearSegmentedColormap.from_list('yellow_blue', colors, N=n_bins)
+
     # Create heatmap
     fig, ax = plt.subplots(1, 1, figsize=(12, 8))
 
@@ -190,15 +263,24 @@ def generate_heatmap_figure(samples, explanation, output_dir):
     sns.heatmap(importance_matrix,
                 xticklabels=joint_names,
                 yticklabels=sample_labels,
-                annot=True,
-                fmt='.3f',
-                cmap='Reds',
+                annot=False,  # Remove numbers from heatmap
+                cmap=cmap,    # Use yellow-to-blue colormap
                 cbar_kws={'label': 'Importance Score'},
                 ax=ax)
 
-    ax.set_title('Joint Importance Heatmap Across Samples', fontsize=14, weight='bold')
-    ax.set_xlabel('Skeleton Joints', fontsize=12)
-    ax.set_ylabel('Samples', fontsize=12)
+    # Set text colors to black
+    ax.set_title('Joint Importance Heatmap Across Samples', fontsize=14, weight='bold', color='black')
+    ax.set_xlabel('Skeleton Joints', fontsize=12, color='black')
+    ax.set_ylabel('Samples', fontsize=12, color='black')
+
+    # Set tick label colors to black
+    ax.tick_params(axis='x', colors='black')
+    ax.tick_params(axis='y', colors='black')
+
+    # Set colorbar label color to black
+    cbar = ax.collections[0].colorbar
+    cbar.set_label('Importance Score', color='black')
+    cbar.ax.tick_params(colors='black')
 
     plt.xticks(rotation=45)
     plt.tight_layout()
@@ -300,3 +382,44 @@ def generate_noise_comparison_figure(samples, explanation, output_dir):
     plt.savefig(os.path.join(output_dir, 'noise_comparison.png'), dpi=300, bbox_inches='tight',
                 facecolor='white', edgecolor='none')
     plt.close()
+
+def save_skeleton_file_info(samples, output_dir):
+    """
+    Save skeleton file information to a text file.
+    Since original skeleton filenames are not preserved in the h5 data,
+    save actor and action IDs with indexing information.
+    """
+    info_file = os.path.join(output_dir, 'skeleton_file_info.txt')
+
+    with open(info_file, 'w') as f:
+        f.write("Skeleton File Information\n")
+        f.write("=" * 50 + "\n\n")
+        f.write("Note: Original skeleton filenames are not available in the processed h5 data.\n")
+        f.write("The following information is extracted from the sample labels:\n\n")
+        f.write("Indexing: All IDs are 0-indexed (starting from 0)\n\n")
+
+        for i, (skeleton, label) in enumerate(samples[:5]):
+            # Convert label to int if needed
+            if isinstance(label, np.ndarray):
+                label_int = int(label.item())
+            elif isinstance(label, (np.int64, np.int32)):
+                label_int = int(label)
+            else:
+                label_int = int(label)
+
+            f.write(f"Sample {i+1}:\n")
+            f.write(f"  Action ID: {label_int} (0-indexed)\n")
+            f.write(f"  Note: Actor ID not available in current data structure\n")
+            f.write(f"  Original filename pattern would be: S###C###P###R###A{label_int+1:03d}.skeleton\n")
+            f.write(f"  (where ### represents unknown setup, camera, performer, replication values)\n\n")
+
+        f.write("Legend:\n")
+        f.write("  S = Setup ID\n")
+        f.write("  C = Camera ID\n")
+        f.write("  P = Performer/Actor ID\n")
+        f.write("  R = Replication ID\n")
+        f.write("  A = Action ID\n\n")
+        f.write("Note: In the original NTU dataset, IDs in filenames are 1-indexed,\n")
+        f.write("but in the processed data they are converted to 0-indexed for ML purposes.\n")
+
+    print(f"Skeleton file information saved to: {info_file}")
