@@ -48,7 +48,8 @@ def create_skeleton_animation(samples, explanation, output_dir, figure_type='ori
     """Create animated GIF of skeleton sequences with improved visualization"""
     print(f"Creating {figure_type} animation...")
 
-    skeleton, label = samples[0]
+    sample = samples[0]
+    skeleton, label = sample[0], sample[1]  # Handle both old and new format
     reshaped = reshape_skeleton(skeleton)
 
     # Calculate global bounds for consistent scaling
