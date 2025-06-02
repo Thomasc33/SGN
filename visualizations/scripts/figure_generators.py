@@ -14,7 +14,8 @@ from pathlib import Path
 from data_utils import apply_smart_masking
 
 def generate_teaser_figure(samples, explanation, out_dir):
-    skel, lbl = samples[0]
+    sample = samples[0]
+    skel, lbl = sample[0], sample[1]  # Handle both old and new format
     resh      = reshape_skeleton(skel)
     bounds, *_ = calculate_global_bounds(resh)
 
@@ -49,7 +50,8 @@ def generate_teaser_figure(samples, explanation, out_dir):
     plt.close(fig)
 
 def generate_skeleton_sensitivity_figure(samples, explanation, out_dir):
-    skel, lbl = samples[0]
+    sample = samples[0]
+    skel, lbl = sample[0], sample[1]  # Handle both old and new format
     lbl = int(lbl)
     resh = reshape_skeleton(skel)
     frm = extract_joints_from_frame(resh[0])
@@ -85,7 +87,8 @@ def generate_skeleton_sensitivity_figure(samples, explanation, out_dir):
 
 def generate_skeleton_attribution_figure(samples, explanation, out_dir):
     """Generate skeleton visualization showing separate privacy and utility attribution scores"""
-    skel, lbl = samples[0]
+    sample = samples[0]
+    skel, lbl = sample[0], sample[1]  # Handle both old and new format
     lbl = int(lbl)
     resh = reshape_skeleton(skel)
     frm = extract_joints_from_frame(resh[0])
@@ -103,10 +106,8 @@ def generate_skeleton_attribution_figure(samples, explanation, out_dir):
     privacy_scores_norm = {j: privacy_norm[j] for j in range(25)}
     utility_scores_norm = {j: utility_norm[j] for j in range(25)}
 
-    # Create custom yellow-to-blue colormap
-    colors = ['#FEF08A', '#93C5FD']  # Yellow to Blue from process diagram
-    n_bins = 256
-    cmap = mcolors.LinearSegmentedColormap.from_list('yellow_blue', colors, N=n_bins)
+    # Use plasma colormap to match joint sensitivity analysis
+    cmap = plt.cm.plasma
 
     views = [(18, 35), (18, -35), (18, 145), (90, -90)]
     fig = plt.figure(figsize=(16, 10))
@@ -235,7 +236,8 @@ def generate_heatmap_figure(samples, explanation, output_dir):
     all_importance = []
     sample_labels = []
 
-    for i, (skeleton, label) in enumerate(samples[:5]):  # Use first 5 samples
+    for i, sample in enumerate(samples[:5]):  # Use first 5 samples
+        skeleton, label = sample[0], sample[1]  # Handle both old and new format
         reshaped = reshape_skeleton(skeleton)
 
         # Convert label to int if needed
@@ -249,10 +251,8 @@ def generate_heatmap_figure(samples, explanation, output_dir):
         all_importance.append(importance_values)
         sample_labels.append(f'Sample {i+1}')
 
-    # Create custom yellow-to-blue colormap
-    colors = ['#FFFF00', "#0000FF"]  # Yellow to Blue from process diagram
-    n_bins = 256
-    cmap = mcolors.LinearSegmentedColormap.from_list('yellow_blue', colors, N=n_bins)
+    # Use plasma colormap to match joint sensitivity analysis
+    cmap = plt.cm.plasma
 
     # Create heatmap
     fig, ax = plt.subplots(1, 1, figsize=(12, 8))
@@ -264,7 +264,7 @@ def generate_heatmap_figure(samples, explanation, output_dir):
                 xticklabels=joint_names,
                 yticklabels=sample_labels,
                 annot=False,  # Remove numbers from heatmap
-                cmap=cmap,    # Use yellow-to-blue colormap
+                cmap=cmap,    # Use plasma colormap
                 cbar_kws={'label': 'Importance Score'},
                 ax=ax)
 
@@ -288,7 +288,8 @@ def generate_heatmap_figure(samples, explanation, output_dir):
     plt.close()
 
 def generate_before_after_masking_figure(samples, explanation, out_dir, beta=0.2):
-    skel, lbl = samples[0]
+    sample = samples[0]
+    skel, lbl = sample[0], sample[1]  # Handle both old and new format
     resh = reshape_skeleton(skel)
     frames = [0, 5, 10]                   # three evenly-spaced frames
 
@@ -321,7 +322,8 @@ def generate_noise_comparison_figure(samples, explanation, output_dir):
     """Generate stunning comparison of smart noise, group noise, and random noise"""
     print("Generating noise comparison figure...")
 
-    skeleton, label = samples[0]
+    sample = samples[0]
+    skeleton, label = sample[0], sample[1]  # Handle both old and new format
     reshaped = reshape_skeleton(skeleton)
 
     # Apply different noise types
@@ -345,7 +347,7 @@ def generate_noise_comparison_figure(samples, explanation, output_dir):
     ax2 = fig.add_subplot(2, 4, 2, projection='3d', facecolor='white')
     smart_joints = extract_joints_from_frame(reshape_skeleton(smart_noisy)[frame_idx])
     draw_skeleton_3d(ax2, smart_joints, importance_scores=smart_importance,
-                    title='Smart Noise', colormap='viridis', fixed_bounds=bounds_3d)
+                    title='Smart Noise', colormap='plasma', fixed_bounds=bounds_3d)
 
     # Group noise
     ax3 = fig.add_subplot(2, 4, 3, projection='3d', facecolor='white')
@@ -365,7 +367,7 @@ def generate_noise_comparison_figure(samples, explanation, output_dir):
 
     ax6 = fig.add_subplot(2, 4, 6, projection='3d', facecolor='white')
     draw_skeleton_3d(ax6, smart_joints, importance_scores=smart_importance,
-                    title='Smart Noise (Alt View)', colormap='viridis', fixed_bounds=bounds_3d)
+                    title='Smart Noise (Alt View)', colormap='plasma', fixed_bounds=bounds_3d)
     ax6.view_init(elev=10, azim=-45)
 
     ax7 = fig.add_subplot(2, 4, 7, projection='3d', facecolor='white')
@@ -386,40 +388,69 @@ def generate_noise_comparison_figure(samples, explanation, output_dir):
 def save_skeleton_file_info(samples, output_dir):
     """
     Save skeleton file information to a text file.
-    Since original skeleton filenames are not preserved in the h5 data,
-    save actor and action IDs with indexing information.
+    Now includes actor ID and original skeleton filename information.
     """
     info_file = os.path.join(output_dir, 'skeleton_file_info.txt')
 
     with open(info_file, 'w') as f:
         f.write("Skeleton File Information\n")
         f.write("=" * 50 + "\n\n")
-        f.write("Note: Original skeleton filenames are not available in the processed h5 data.\n")
-        f.write("The following information is extracted from the sample labels:\n\n")
+        f.write("Skeleton files used for all visualizations:\n\n")
         f.write("Indexing: All IDs are 0-indexed (starting from 0)\n\n")
 
-        for i, (skeleton, label) in enumerate(samples[:5]):
-            # Convert label to int if needed
-            if isinstance(label, np.ndarray):
-                label_int = int(label.item())
-            elif isinstance(label, (np.int64, np.int32)):
-                label_int = int(label)
-            else:
-                label_int = int(label)
+        for i, sample in enumerate(samples[:5]):
+            if len(sample) == 3:
+                skeleton, label, metadata = sample
+                if metadata:
+                    # Convert label to int if needed
+                    if isinstance(label, np.ndarray):
+                        label_int = int(label.item())
+                    elif isinstance(label, (np.int64, np.int32)):
+                        label_int = int(label)
+                    else:
+                        label_int = int(label)
 
-            f.write(f"Sample {i+1}:\n")
-            f.write(f"  Action ID: {label_int} (0-indexed)\n")
-            f.write(f"  Note: Actor ID not available in current data structure\n")
-            f.write(f"  Original filename pattern would be: S###C###P###R###A{label_int+1:03d}.skeleton\n")
-            f.write(f"  (where ### represents unknown setup, camera, performer, replication values)\n\n")
+                    f.write(f"Sample {i+1}:\n")
+                    f.write(f"  Original filename: {metadata['filename']}.skeleton\n")
+                    f.write(f"  Actor ID: {metadata['actor_id']} (0-indexed, original: P{metadata['actor_id']+1:03d})\n")
+                    f.write(f"  Action ID: {metadata['action_id']} (0-indexed, original: A{metadata['action_id']+1:03d})\n")
+                    f.write(f"  Label from h5: {label_int}\n")
+
+                    # Parse additional info from filename
+                    filename = metadata['filename']
+                    setup_id = int(filename[1:4])
+                    camera_id = int(filename[5:8])
+                    replication_id = int(filename[13:16])
+
+                    f.write(f"  Setup ID: {setup_id-1} (0-indexed, original: S{setup_id:03d})\n")
+                    f.write(f"  Camera ID: {camera_id-1} (0-indexed, original: C{camera_id:03d})\n")
+                    f.write(f"  Replication ID: {replication_id-1} (0-indexed, original: R{replication_id:03d})\n\n")
+                else:
+                    f.write(f"Sample {i+1}: Metadata not available\n\n")
+            else:
+                # Handle old format for backward compatibility
+                skeleton, label = sample
+                if isinstance(label, np.ndarray):
+                    label_int = int(label.item())
+                elif isinstance(label, (np.int64, np.int32)):
+                    label_int = int(label)
+                else:
+                    label_int = int(label)
+
+                f.write(f"Sample {i+1}:\n")
+                f.write(f"  Action ID: {label_int} (0-indexed)\n")
+                f.write(f"  Note: Actor ID not available in current data structure\n\n")
 
         f.write("Legend:\n")
-        f.write("  S = Setup ID\n")
-        f.write("  C = Camera ID\n")
-        f.write("  P = Performer/Actor ID\n")
-        f.write("  R = Replication ID\n")
-        f.write("  A = Action ID\n\n")
+        f.write("  S = Setup ID (recording setup)\n")
+        f.write("  C = Camera ID (camera viewpoint)\n")
+        f.write("  P = Performer/Actor ID (person performing the action)\n")
+        f.write("  R = Replication ID (repetition number)\n")
+        f.write("  A = Action ID (action class)\n\n")
         f.write("Note: In the original NTU dataset, IDs in filenames are 1-indexed,\n")
-        f.write("but in the processed data they are converted to 0-indexed for ML purposes.\n")
+        f.write("but in the processed data they are converted to 0-indexed for ML purposes.\n\n")
+        f.write("Privacy Attribution Analysis:\n")
+        f.write("The Actor ID is crucial for privacy attribution analysis as it represents\n")
+        f.write("the identity that the re-identification model tries to predict.\n")
 
     print(f"Skeleton file information saved to: {info_file}")

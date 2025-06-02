@@ -11,7 +11,7 @@ import math
 
 def load_ntu_data(dataset='NTU', case=0, tag='ar', num_samples=5):
     """
-    Load sample data from NTU dataset
+    Load sample data from NTU dataset with metadata
 
     Args:
         dataset: 'NTU', 'NTU120', or 'ETRI'
@@ -20,30 +20,59 @@ def load_ntu_data(dataset='NTU', case=0, tag='ar', num_samples=5):
         num_samples: number of random samples to load
 
     Returns:
-        samples: list of (skeleton_data, label) tuples
+        samples: list of (skeleton_data, label, metadata) tuples
+        where metadata contains: {'filename': str, 'actor_id': int, 'action_id': int}
     """
     if dataset == 'NTU':
         metric = 'CS' if case == 0 else 'CV'
         path = f'./data/ntu/NTU_{metric}_{tag}.h5'
+        stats_dir = './data/ntu/statistics'
     elif dataset == 'NTU120':
         metric = 'CS' if case == 0 else 'CV'
         path = f'./data/ntu120/NTU_{metric}_{tag}.h5'
+        stats_dir = './data/ntu120/statistics'
     elif dataset == 'ETRI':
         metric = 'CS' if case == 0 else 'CV'
         path = f'./data/etri/ETRI_{metric}_{tag}.h5'
+        stats_dir = './data/etri/statistics'
     else:
         raise ValueError(f"Unknown dataset: {dataset}")
 
     if not os.path.exists(path):
         raise FileNotFoundError(f"Data file not found: {path}")
 
+    # Load skeleton data
     with h5py.File(path, 'r') as f:
         X = f['x'][:]
         Y = np.argmax(f['y'][:], -1)
 
-    # Randomly sample data
+    # Load metadata files
+    try:
+        with open(os.path.join(stats_dir, 'skes_available_name.txt'), 'r') as f:
+            filenames = [line.strip() for line in f.readlines()]
+
+        with open(os.path.join(stats_dir, 'performer.txt'), 'r') as f:
+            performers = [int(line.strip()) for line in f.readlines()]
+
+        with open(os.path.join(stats_dir, 'label.txt'), 'r') as f:
+            actions = [int(line.strip()) for line in f.readlines()]
+    except FileNotFoundError as e:
+        print(f"Warning: Could not load metadata files: {e}")
+        # Fallback to basic data without metadata
+        indices = random.sample(range(len(X)), min(num_samples, len(X)))
+        samples = [(X[i], Y[i], None) for i in indices]
+        return samples
+
+    # Randomly sample data with metadata
     indices = random.sample(range(len(X)), min(num_samples, len(X)))
-    samples = [(X[i], Y[i]) for i in indices]
+    samples = []
+    for i in indices:
+        metadata = {
+            'filename': filenames[i],
+            'actor_id': performers[i] - 1,  # Convert to 0-indexed
+            'action_id': actions[i] - 1     # Convert to 0-indexed
+        }
+        samples.append((X[i], Y[i], metadata))
 
     return samples
 
