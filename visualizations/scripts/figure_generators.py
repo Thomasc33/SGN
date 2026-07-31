@@ -312,8 +312,10 @@ def generate_before_after_masking_figure(samples, explanation, out_dir, beta=0.2
         axes[1, col].set_title(f"Masked (β={beta})", pad=10)
 
     fig.suptitle("Before and After Smart Masking", fontsize=18, weight="bold",
-                 y=0.94)
-    fig.tight_layout()
+                 y=0.98)
+    # Reserve the top strip for the suptitle; tight_layout ignores it otherwise
+    # and the per-axes titles collide with it.
+    fig.tight_layout(rect=[0, 0, 1, 0.94])
     fig.savefig(Path(out_dir) / "before_after_masking.png",
                 dpi=300, bbox_inches="tight")
     plt.close(fig)
@@ -379,8 +381,10 @@ def generate_noise_comparison_figure(samples, explanation, output_dir):
     draw_skeleton_3d(ax8, naive_joints, title='Random Noise (Alt View)', fixed_bounds=bounds_3d)
     ax8.view_init(elev=10, azim=-45)
 
-    fig.suptitle('Noise Application Comparison', fontsize=20, weight='bold', color='black', y=0.95)
-    plt.tight_layout()
+    fig.suptitle('Noise Application Comparison', fontsize=20, weight='bold', color='black', y=0.99)
+    # Reserve the top strip for the suptitle; tight_layout ignores it otherwise
+    # and the per-axes titles collide with it.
+    plt.tight_layout(rect=[0, 0, 1, 0.94])
     plt.savefig(os.path.join(output_dir, 'noise_comparison.png'), dpi=300, bbox_inches='tight',
                 facecolor='white', edgecolor='none')
     plt.close()
