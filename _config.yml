@@ -1,0 +1,30 @@
+title: XAnon
+description: Explanation-based Anonymization Methods for Motion Privacy (PAKDD 2025)
+url: https://explanation.thomasc.tech
+
+# Serve index.html verbatim; nothing here needs Jekyll templating.
+plugins: []
+
+# Keep the Pages build to the static site. Everything below is research code,
+# data-prep tooling, or notebook output that must not be published or scanned.
+include:
+  - CNAME
+
+exclude:
+  - data/
+  - results/
+  - visualizations/
+  - "Explanation Testing/"
+  - images/
+  - "*.py"
+  - "*.ipynb"
+  - "*.pth"
+  - "*.pt"
+  - "*.pkl"
+  - "*.h5"
+  - "*.txt"
+  - requirements.txt
+  - Gemfile
+  - Gemfile.lock
+  - vendor/
+  - .github/

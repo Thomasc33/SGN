@@ -350,10 +350,30 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
-*.h5
+
+# --- Project-specific ---------------------------------------------------
+.DS_Store
 mlruns/
 
+# Datasets and preprocessed arrays
+*.h5
+*.pkl
+*.npz
+data/*/nturgb+d_skeletons/
+data/*/raw_data/
+data/*/denoised_data/
 
+# Model checkpoints and evaluation dumps.
+# Trained weights are distributed via GitHub Releases, not tracked in git:
+#   gh release download weights-v1 --repo Thomasc33/SGN --dir results
+results/
+pretrained/
+*.pth
+*.pt
 
-
-.DS_Store
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/

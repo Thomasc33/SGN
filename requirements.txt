@@ -1,0 +1,15 @@
+# Core training and evaluation
+torch>=1.9.0
+numpy>=1.21.0
+pandas>=1.3.0
+h5py>=3.1.0
+scikit-learn>=1.0.0
+
+# Explainability — Integrated Gradients attributions
+captum>=0.5.0
+
+# Figure and animation generation (visualizations/)
+matplotlib>=3.5.0
+seaborn>=0.11.0
+pillow>=8.0.0
+imageio>=2.9.0
