@@ -1,0 +1,52 @@
+name: Deploy project page
+
+# Builds index.html and its assets with Jekyll and publishes to GitHub Pages
+# at explanation.thomasc.tech. Everything not needed by the site is excluded
+# in _config.yml.
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'index.html'
+      - 'fig/**'
+      - '_config.yml'
+      - 'CNAME'
+      - 'README.md'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let an in-flight deploy finish rather than cancelling it mid-publish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./
+          destination: ./_site
+
+      - uses: actions/upload-pages-artifact@v3
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
