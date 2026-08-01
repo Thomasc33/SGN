@@ -244,7 +244,7 @@ commands.txt            Command reference
 |---------|-------|------|
 | PMR — Privacy-centric deep motion retargeting | ICCV 2025 | [pmr.thomasc.tech](https://pmr.thomasc.tech) |
 | DisentangledTMR — Factorized-transformer retargeting | ECCV 2026 | [tmr.thomasc.tech](https://tmr.thomasc.tech) |
-| LAN — Linkage attack on skeleton motion | CIKM 2023 | [ACM DL](https://dl.acm.org/doi/10.1145/3583780.3615263) |
+| LAN — Linkage attack on skeleton motion | CIKM 2023 | [linkage.thomasc.tech](https://linkage.thomasc.tech) |
 | Privacy & utility in skeleton data in VR metaverses | MetaCom 2024 | [IEEE Xplore](https://ieeexplore.ieee.org/abstract/document/10740130) |
 
 ## Acknowledgements and license

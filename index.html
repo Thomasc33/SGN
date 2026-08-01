@@ -264,7 +264,8 @@
         .igrid.three{grid-template-columns:repeat(3,1fr)}
         .ic{background:var(--bg-surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:var(--transition-theme),transform 0.3s,box-shadow 0.3s}
         .ic:hover{transform:translateY(-3px);box-shadow:var(--shadow-md)}
-        .ic img{width:100%;height:auto;background:#fff}
+        .ic picture{display:block}
+        .ic img{width:100%;height:auto;background:var(--bg-surface);transition:var(--transition-theme)}
         .ic figcaption{padding:0.875rem 1rem;font-size:0.8rem;color:var(--text-muted);line-height:1.5}
         .ic figcaption b{color:var(--text);font-weight:600}
         .ic.cen{max-width:760px;margin:0 auto}
@@ -587,7 +588,10 @@
     </div>
 
     <figure class="ic cen" style="margin-top:2.5rem">
-        <img src="fig/process.png" alt="Three-step pipeline diagram: train utility and threat models, identify sensitive joints with Integrated Gradients, apply smart masking or differential privacy." loading="lazy" width="1600" height="596">
+        <picture>
+            <source class="fig-dark" media="(prefers-color-scheme: dark)" srcset="fig/dark/process.png">
+            <img src="fig/process.png" alt="Three-step pipeline diagram: train utility and threat models, identify sensitive joints with Integrated Gradients, apply smart masking or differential privacy." loading="lazy" width="1600" height="596">
+        </picture>
         <figcaption><b>The pipeline end to end.</b> Both models are trained first, Integrated Gradients turns them into a per-joint sensitivity score, and the score drives whichever protection mechanism the deployment can tolerate.</figcaption>
     </figure>
 </section>
@@ -843,55 +847,88 @@
 
     <div class="igrid">
         <figure class="ic">
-            <img src="fig/attribution.png" alt="Two rows of skeletons coloured by attribution score: the top row shows privacy attribution concentrated in the head and feet, the bottom row shows utility attribution concentrated in the hands and hips." loading="lazy" width="1600" height="1025">
+            <picture>
+                <source class="fig-dark" media="(prefers-color-scheme: dark)" srcset="fig/dark/attribution.png">
+                <img src="fig/attribution.png" alt="Two rows of skeletons coloured by attribution score: the top row shows privacy attribution concentrated in the head and feet, the bottom row shows utility attribution concentrated in the hands and hips." loading="lazy" width="1600" height="1025">
+            </picture>
             <figcaption><b>Privacy versus utility attribution.</b> The two models do not look at the same joints. The re-identification model fixates on the head and lower limbs; the action model leans on the hands and hips. That disagreement is the whole opportunity.</figcaption>
         </figure>
         <figure class="ic">
-            <img src="fig/sensitivity.png" alt="Four views of a skeleton with joints coloured by combined sensitivity score, head brightest." loading="lazy" width="1600" height="1669">
+            <picture>
+                <source class="fig-dark" media="(prefers-color-scheme: dark)" srcset="fig/dark/sensitivity.png">
+                <img src="fig/sensitivity.png" alt="Four views of a skeleton with joints coloured by combined sensitivity score, head brightest." loading="lazy" width="1600" height="1669">
+            </picture>
             <figcaption><b>Combined sensitivity ψ<sub>j</sub>.</b> After fusing both attributions at α = 0.9, sensitivity concentrates in the extremities — head first, then feet and ankles — while the spine chain scores lowest.</figcaption>
         </figure>
     </div>
 
     <div class="igrid">
         <figure class="ic">
-            <img src="fig/heatmap.png" alt="Heatmap of importance score for 25 joints across 5 samples, showing per-sample variation." loading="lazy" width="1600" height="1124">
+            <picture>
+                <source class="fig-dark" media="(prefers-color-scheme: dark)" srcset="fig/dark/heatmap.png">
+                <img src="fig/heatmap.png" alt="Heatmap of importance score for 25 joints across 5 samples, showing per-sample variation." loading="lazy" width="1600" height="1124">
+            </picture>
             <figcaption><b>Sensitivity is per-sequence, not fixed.</b> Across five samples the ranking shifts noticeably — joints 15 and 19 spike in some sequences and not others. Scores are recomputed at inference rather than baked in as a static joint list.</figcaption>
         </figure>
         <figure class="ic">
-            <img src="fig/masking.png" alt="Three frames of a skeleton before and after smart masking at beta 0.2." loading="lazy" width="1600" height="934">
+            <picture>
+                <source class="fig-dark" media="(prefers-color-scheme: dark)" srcset="fig/dark/masking.png">
+                <img src="fig/masking.png" alt="Three frames of a skeleton before and after smart masking at beta 0.2." loading="lazy" width="1600" height="934">
+            </picture>
             <figcaption><b>Smart Masking at β = 0.2.</b> Five joints removed. The action is still legible — but the collapsed limbs are exactly the visual artefact that makes masking unusable for rendered VR, and the reason the DP variants exist.</figcaption>
         </figure>
     </div>
 
     <figure class="ic cen">
-        <img src="fig/noise.png" alt="Four-column comparison of original, smart noise, group noise and random noise skeletons in two views." loading="lazy" width="1600" height="788">
+        <picture>
+            <source class="fig-dark" media="(prefers-color-scheme: dark)" srcset="fig/dark/noise.png">
+            <img src="fig/noise.png" alt="Four-column comparison of original, smart noise, group noise and random noise skeletons in two views." loading="lazy" width="1600" height="788">
+        </picture>
         <figcaption><b>Three noise strategies side by side.</b> Smart Noise perturbs every joint proportionally to its sensitivity; Group Noise displaces the sensitive set hard (marked ×) while leaving the rest nearly intact; random noise spreads the budget evenly and protects nothing in particular.</figcaption>
     </figure>
 
     <h3 class="sub-h">Animations</h3>
     <div class="igrid three">
         <figure class="ic">
-            <img src="fig/gif/original_animation.gif" alt="Animated original skeleton motion sequence." loading="lazy">
+            <picture>
+                <source class="fig-dark" media="(prefers-color-scheme: dark)" srcset="fig/dark/gif/original_animation.gif">
+                <img src="fig/gif/original_animation.gif" alt="Animated original skeleton motion sequence." loading="lazy">
+            </picture>
             <figcaption><b>Original.</b> Unmodified NTU60 sequence.</figcaption>
         </figure>
         <figure class="ic">
-            <img src="fig/gif/sensitivity_animation.gif" alt="Animated skeleton with joints coloured by sensitivity score over time." loading="lazy">
+            <picture>
+                <source class="fig-dark" media="(prefers-color-scheme: dark)" srcset="fig/dark/gif/sensitivity_animation.gif">
+                <img src="fig/gif/sensitivity_animation.gif" alt="Animated skeleton with joints coloured by sensitivity score over time." loading="lazy">
+            </picture>
             <figcaption><b>Sensitivity over time.</b> Per-frame ψ<sub>j</sub> colouring.</figcaption>
         </figure>
         <figure class="ic">
-            <img src="fig/gif/smart_masking_animation.gif" alt="Animated skeleton with the most sensitive joints removed." loading="lazy">
+            <picture>
+                <source class="fig-dark" media="(prefers-color-scheme: dark)" srcset="fig/dark/gif/smart_masking_animation.gif">
+                <img src="fig/gif/smart_masking_animation.gif" alt="Animated skeleton with the most sensitive joints removed." loading="lazy">
+            </picture>
             <figcaption><b>Smart Masking.</b> Top-β joints suppressed.</figcaption>
         </figure>
         <figure class="ic">
-            <img src="fig/gif/smart_noise_animation.gif" alt="Animated skeleton with per-joint differential privacy noise." loading="lazy">
+            <picture>
+                <source class="fig-dark" media="(prefers-color-scheme: dark)" srcset="fig/dark/gif/smart_noise_animation.gif">
+                <img src="fig/gif/smart_noise_animation.gif" alt="Animated skeleton with per-joint differential privacy noise." loading="lazy">
+            </picture>
             <figcaption><b>Smart Noise.</b> Per-joint ε allocation.</figcaption>
         </figure>
         <figure class="ic">
-            <img src="fig/gif/group_noise_animation.gif" alt="Animated skeleton with two-group differential privacy noise." loading="lazy">
+            <picture>
+                <source class="fig-dark" media="(prefers-color-scheme: dark)" srcset="fig/dark/gif/group_noise_animation.gif">
+                <img src="fig/gif/group_noise_animation.gif" alt="Animated skeleton with two-group differential privacy noise." loading="lazy">
+            </picture>
             <figcaption><b>Group Noise.</b> Two-group budget split.</figcaption>
         </figure>
         <figure class="ic">
-            <img src="fig/gif/naive_noise_animation.gif" alt="Animated skeleton with uniform Gaussian noise on all joints." loading="lazy">
+            <picture>
+                <source class="fig-dark" media="(prefers-color-scheme: dark)" srcset="fig/dark/gif/naive_noise_animation.gif">
+                <img src="fig/gif/naive_noise_animation.gif" alt="Animated skeleton with uniform Gaussian noise on all joints." loading="lazy">
+            </picture>
             <figcaption><b>Naïve Noise.</b> Uniform baseline.</figcaption>
         </figure>
     </div>
@@ -1046,11 +1083,11 @@ python visualizations/run_visualizations.py</pre>
             <p>Factorized transformers that separate action from identity architecturally, with a three-stage curriculum for progressive disentanglement.</p>
             <span class="rl">tmr.thomasc.tech <i class="fas fa-arrow-right" aria-hidden="true"></i></span>
         </a>
-        <a class="relcard" href="https://dl.acm.org/doi/10.1145/3583780.3615263" target="_blank" rel="noopener">
+        <a class="relcard" href="https://linkage.thomasc.tech" target="_blank" rel="noopener">
             <div class="rv">CIKM 2023</div>
             <h4>Linkage Attack (LAN)</h4>
             <p>The Siamese attack model that established how readily skeleton motion links back to an individual — the threat this line of defences answers.</p>
-            <span class="rl">ACM Digital Library <i class="fas fa-arrow-right" aria-hidden="true"></i></span>
+            <span class="rl">linkage.thomasc.tech <i class="fas fa-arrow-right" aria-hidden="true"></i></span>
         </a>
     </div>
 </section>
@@ -1085,8 +1122,21 @@ python visualizations/run_visualizations.py</pre>
 
     /* ---------- THEME ---------- */
     var root = document.documentElement;
+
+    // Figures ship as light and dark PNG/GIF pairs. <picture> resolves the
+    // right one at parse time from prefers-color-scheme, which keeps it
+    // working without JS and avoids fetching both. Flipping the <source>
+    // media attribute makes the manual toggle override that choice.
+    function applyFigureTheme(t) {
+        var q = t === 'dark' ? 'all' : 'not all';
+        document.querySelectorAll('source.fig-dark').forEach(function (s) {
+            s.media = q;
+        });
+    }
+
     function applyTheme(t) {
         root.setAttribute('data-theme', t);
+        applyFigureTheme(t);
         var icon = t === 'dark' ? 'fa-sun' : 'fa-moon';
         ['desktop-theme', 'mobile-theme'].forEach(function (id) {
             var el = document.getElementById(id);
